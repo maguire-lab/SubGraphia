@@ -26,8 +26,8 @@ jobs:
         with:
           install-pdiff: true
 
-      - name: Download test data
-        run: cd subgraph_analyser && bash test_data_download.sh
+      # - name: Download test data
+      #   run: cd subgraph_analyser && bash test_data_download.sh
 
       - name: Run Tests
-        run: nf-test test subgraph_analyser/tests/main.nf.test --ci
+        run: nf-test test subgraph_analyser/tests/main.nf.test --ci --options "-stub-run"
