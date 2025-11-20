@@ -1,0 +1,42 @@
+{
+    "kraken": {
+        "content": [
+            "3002274_test_kraken_out.txt:md5,8e5e72bd873ca27318cbfb931e71f0c7"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-10-30T15:30:13.445967998"
+    },
+    "amr_gene_summary": {
+        "content": [
+            "AMR_genes_summary.tsv:md5,077b18b397d7b7d656db8d49bffc77aa"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-10-30T15:30:13.474264668"
+    },
+    "graphaligner": {
+        "content": [
+            "3002274_test_GA_locus.tsv:md5,70a62ef563f5df19bd3315d36270482a"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-10-30T15:30:13.432646605"
+    },
+    "final_metadata": {
+        "content": [
+            "final_metadata.tsv:md5,b5c45ed512c7cc6aa8481ec0c41fc987"
+        ],
+        "meta": {
+            "nf-test": "0.9.3",
+            "nextflow": "24.10.4"
+        },
+        "timestamp": "2025-10-30T15:30:13.486159345"
+    }
+}

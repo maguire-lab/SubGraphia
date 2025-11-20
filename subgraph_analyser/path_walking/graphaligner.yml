@@ -1,0 +1,53 @@
+name: graphaligner-1.0.17b
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - boost-cpp=1.78.0=h2c5509c_4
+  - bzip2=1.0.8=h7f98852_4
+  - ca-certificates=2025.1.31=hbcca054_0
+  - graphaligner=1.0.17b=h21ec9f0_2
+  - icu=73.2=h59595ed_0
+  - jemalloc=5.2.0=he1b5a44_0
+  - ld_impl_linux-64=2.40=h41732ed_0
+  - libblas=3.9.0=25_linux64_openblas
+  - libcblas=3.9.0=25_linux64_openblas
+  - libdivsufsort=2.0.2=h031d066_8
+  - libffi=3.4.2=h7f98852_5
+  - libgcc=14.2.0=h77fa898_1
+  - libgcc-ng=14.2.0=h69a702a_1
+  - libgfortran=14.2.0=h69a702a_1
+  - libgfortran5=14.2.0=hd5240d6_1
+  - libgomp=14.2.0=h77fa898_1
+  - liblapack=3.9.0=25_linux64_openblas
+  - libnsl=2.0.0=h7f98852_0
+  - libopenblas=0.3.28=pthreads_h94d23a6_1
+  - libprotobuf=3.14.0=h780b84a_0
+  - libsqlite=3.43.0=h2797004_0
+  - libstdcxx=14.2.0=hc0a3c3a_1
+  - libstdcxx-ng=13.1.0=hfd8a6a1_0
+  - libuuid=2.38.1=h0b41bf4_0
+  - libzlib=1.2.13=hd590300_5
+  - ncurses=6.4=hcb278e6_0
+  - numpy=2.0.2=py39h9cb892a_1
+  - openssl=3.4.1=h7b32b05_0
+  - pandas=2.2.3=py39h3b40f6f_1
+  - pip=23.2.1=pyhd8ed1ab_0
+  - protobuf=3.14.0=py39he80948d_1
+  - python=3.9.17=h0755675_0_cpython
+  - python-dateutil=2.9.0.post0=pyhff2d567_0
+  - python-tzdata=2024.2=pyhd8ed1ab_0
+  - python_abi=3.9=3_cp39
+  - pytz=2024.1=pyhd8ed1ab_0
+  - readline=8.2=h8228510_1
+  - setuptools=68.1.2=pyhd8ed1ab_0
+  - six=1.16.0=pyh6c4a22f_0
+  - tk=8.6.12=h27826a3_0
+  - tzdata=2023c=h71feb2d_0
+  - wheel=0.41.2=pyhd8ed1ab_0
+  - xz=5.2.6=h166bdaf_0
+  - zlib=1.2.13=hd590300_5
+  - zstd=1.5.2=hfc55251_7
+prefix: /home/david/mambaforge/envs/graphaligner-1.0.17b

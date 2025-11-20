@@ -1,0 +1,33 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+    profile "test"
+
+    test("Complete workflow test, expect at least 9 minutes runtime") {
+
+        when {
+            params {
+                // define parameters here. params from config?
+                outdir = "${projectDir}/tests/results"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success },
+                { assert file("${projectDir}/tests/results/3002274_test_GA_locus.tsv").exists() },
+                { assert snapshot(file("${projectDir}/tests/results/3002274_test_GA_locus.tsv")).match("graphaligner") },
+                { assert file("${projectDir}/tests/results/3002274_test_kraken_out.txt").exists() },
+                { assert snapshot(file("${projectDir}/tests/results/3002274_test_kraken_out.txt")).match("kraken") },
+                { assert file("${projectDir}/tests/results/AMR_genes_summary.tsv").exists() },
+                { assert snapshot(file("${projectDir}/tests/results/AMR_genes_summary.tsv")).match("amr_gene_summary") },
+                { assert file("${projectDir}/tests/results/final_metadata.tsv").exists() },
+                { assert snapshot(file("${projectDir}/tests/results/final_metadata.tsv")).match("final_metadata") }
+
+            )
+        }
+
+    }
+
+}
