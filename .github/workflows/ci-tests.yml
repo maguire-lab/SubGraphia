@@ -22,9 +22,9 @@ jobs:
           version: "latest-edge"
 
       - name: Install nf-test
-        run: |
-          wget -qO- https://get.nf-test.com | bash
-          sudo mv nf-test /usr/local/bin/
+        uses: nf-core/setup-nf-test@v1
+        with:
+          version: "latest"
 
       - name: Run Tests
         run: nf-test test --ci
