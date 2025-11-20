@@ -30,4 +30,4 @@ jobs:
       #   run: cd subgraph_analyser && bash test_data_download.sh
 
       - name: Run Tests
-        run: nf-test test subgraph_analyser/tests/main.nf.test --ci --options "-stub-run"
+        run: nf-test test subgraph_analyser/tests/main.nf.test --ci --dryRun
