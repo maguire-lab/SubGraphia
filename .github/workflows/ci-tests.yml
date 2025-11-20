@@ -24,7 +24,7 @@ jobs:
       - name: Install nf-test
         uses: nf-core/setup-nf-test@v1
         with:
-          version: "latest"
+          install-pdiff: true
 
       - name: Run Tests
         run: nf-test test --ci
