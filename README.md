@@ -19,13 +19,13 @@ Subgraph Analyser is a pipeline designed to extract and analyse the sequence sur
 
 ## Computational requirements
 - Linux based operating system
-- Minimum ~80 GB RAM (May vary depending on graph size and gene of interest frequency)
+- Minimum ~80 GB RAM (Dependant on Kraken2 database chosen)
 - More cores will speed up the pipeline
 - Minimum ~400 GB disk space if using the default databases (kraken2 standard refseq bacteria db, bakta light db, card protein homolog db)
 
 ## Clone the repository
 ```bash
-git clone INSERT REPO LINK HERE
+git clone https://github.com/maguire-lab/Subgraph_Analyser.git
 ```
 
 ## Install Conda/Mamba and Nextflow
@@ -76,3 +76,5 @@ Thank you for your interest in contributing to Subgraph Analyser! We use GitHub 
 - [ ] implement database download functionality for first use - needs a process
 - [ ] implement clipped read filtering criterion 
 - [ ] Add [nf-test badges](https://www.nf-test.com/tutorials/github-actions/) to README
+- [ ] Write test_data download script
+- [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
