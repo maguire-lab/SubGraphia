@@ -18,3 +18,4 @@ taxdump.tar.gz
 .nf-test.log
 .nf-test/
 **results/
+**test_data/

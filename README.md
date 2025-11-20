@@ -42,13 +42,14 @@ git clone https://github.com/maguire-lab/Subgraph_Analyser.git
 
 ## Test the pipeline
 - [Download test data](https://doi.org/10.17605/OSF.IO/KDNM8) from the Open Science Framework (OSF) repository
-- Uncompress file in same directory as main.nf ```subgraph_analyser/subgraph_analyser```
+- Run download script in the `subgraph_analyser` directory
 ```bash
-tar -xzf test_data.tar.gz
+cd Subgraph_Analyser/subgraph_analyser
+sh test_data_download.sh
 ```
+
 - Run the test
 ```bash
-cd subgraph_analyser/subgraph_analyser
 nf-test test tests/main.nf.test
 ```
 
@@ -76,5 +77,4 @@ Thank you for your interest in contributing to Subgraph Analyser! We use GitHub 
 - [ ] implement database download functionality for first use - needs a process
 - [ ] implement clipped read filtering criterion 
 - [ ] Add [nf-test badges](https://www.nf-test.com/tutorials/github-actions/) to README
-- [ ] Write test_data download script
 - [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
