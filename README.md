@@ -1,4 +1,5 @@
 # Subgraph Analyser
+[![CI NF-Tests Stub-run](https://github.com/maguire-lab/Subgraph_Analyser/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/maguire-lab/Subgraph_Analyser/actions/workflows/ci-tests.yml)
 
 ![logo](./docs/logo.svg)
 
