@@ -35,6 +35,11 @@ process MINIMAP_REDUNDANCY_REMOVER {
         done < representative_sequences.tsv
     fi
     """
+    stub:
+    """
+    touch representative_path1.fasta
+    touch representative_path2.fasta
+    """
 }
 
 process BWAMEM2 {
@@ -67,6 +72,10 @@ process BWAMEM2 {
     samtools sort --threads 12 -o all_paths_readaln.bam out.sam
     rm out.sam
     """
+    stub:
+    """
+    touch all_paths_readaln.bam
+    """
 }
 
 process BAM_FILTER {
@@ -86,6 +95,10 @@ process BAM_FILTER {
     script:
     """
     python3 ${projectDir}/path_filtering/bam_filtering.py $bam
+    """
+    stub:
+    """
+    touch ${readID}_summary.csv
     """
 }
 
@@ -128,6 +141,11 @@ process PATH_READ_ALN_FILTER {
         samtools faidx all_rep.fasta "\$line" > "\$line.fa"
     done < filtered_path_ids.txt
     """
-
-
+    stub:
+    """
+    touch filtered_path1.fa
+    touch filtered_path2.fa
+    touch final_metadata.tsv
+    touch AMR_genes_summary.tsv
+    """
 }

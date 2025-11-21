@@ -44,6 +44,11 @@ process GRAPHALIGNER {
     GraphAligner -g $graph -f $genes -a ${graphID}_GA_.gaf -x dbg
     python3 ${projectDir}/path_walking/graphaligner_hit_locus.py ${graphID}_GA_.gaf ${graphID}_GA_locus.tsv
     """
+    stub:
+    """
+    touch ${graphID}_GA_locus.tsv
+    """
+
 }
 
 process GFAKRAKEN2 {
@@ -63,6 +68,11 @@ process GFAKRAKEN2 {
     script:
     """
     python3 ${projectDir}/path_walking/gfaKraken.py $graph $kraken_db
+    """
+
+    stub:
+    """
+    touch ${graphID}_kraken_out.txt
     """
 }
 
@@ -85,6 +95,10 @@ process SUBGRAPH_EXTRACT {
     script:
     """
     python3 ${projectDir}/path_walking/subgraph_extract.py $graph $align $radius
+    """
+    stub:
+    """
+    touch ARO_subgraph.gfa
     """
 
 }
@@ -116,5 +130,11 @@ process PATH_WALK {
     target_path=\$(grep ${subgraphs.baseName} $align | cut -f 6)
     # run the path walk script
     python3 ${projectDir}/path_walking/path_walk.py $subgraphs \$target_path $kraken_out $overlap $align
+    """
+    stub:
+    """
+    touch ${subgraphs.baseName}_congruent_paths.csv
+    touch ${subgraphs.baseName}_metadata.tsv
+    touch ${subgraphs.baseName}.fasta
     """
 }

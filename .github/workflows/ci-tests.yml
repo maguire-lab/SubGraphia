@@ -26,8 +26,17 @@ jobs:
         with:
           install-pdiff: true
 
-      # - name: Download test data
-      #   run: cd subgraph_analyser && bash test_data_download.sh
+      - name: create input and database stubs
+        run: 
+          mkdir -p subgraph_analyser/test_data
+          touch subgraph_analyser/test_data/3002274_test.gfa
+          touch subgraph_analyser/test_data/sample_1.fastq
+          touch subgraph_analyser/test_data/sample_2.fastq
+          mkdir -p subgraph_analyser/test_data/refseq_bacteria_kraken_db
+          mkdir -p subgraph_analyser/test_data/bakta_light/db-light
+          touch subgraph_analyser/test_data/card_protein_homolog_with_fam.fasta
 
       - name: Run Tests
-        run: nf-test test subgraph_analyser/tests/main.nf.test --ci --dryRun
+        run: 
+          cd subgraph_analyser
+          nf-test test tests/stub.nf.test

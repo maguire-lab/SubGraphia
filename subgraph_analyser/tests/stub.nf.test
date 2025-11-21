@@ -1,0 +1,22 @@
+nextflow_pipeline {
+
+    name "Test Workflow stub"
+    script "main.nf"
+    profile "stub"
+
+    test("Stub workflow test") {
+
+        options "-stub"
+        when {
+            params {
+                outdir = "${projectDir}/tests/results"
+            }
+        }
+
+        then {
+            assertAll(
+                { assert workflow.success }
+            )
+        }
+    }
+}

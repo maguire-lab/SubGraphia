@@ -16,4 +16,8 @@ process BAKTA {
     """
     bakta --db $bakta_db --skip-plot $filtered_fasta
     """
+    stub:
+    """
+    touch ${readID}.gbff
+    """
 }

@@ -8,7 +8,6 @@ nextflow_pipeline {
 
         when {
             params {
-                // define parameters here. params from config?
                 outdir = "${projectDir}/tests/results"
             }
         }
