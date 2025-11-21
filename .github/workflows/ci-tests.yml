@@ -38,5 +38,4 @@ jobs:
 
       - name: Run Tests
         run: 
-          cd subgraph_analyser
-          nf-test test tests/stub.nf.test
+          cd subgraph_analyser &&nf-test test tests/stub.nf.test
