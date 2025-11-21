@@ -78,3 +78,5 @@ Thank you for your interest in contributing to Subgraph Analyser! We use GitHub 
 - [ ] implement clipped read filtering criterion 
 - [ ] Add [nf-test badges](https://www.nf-test.com/tutorials/github-actions/) to README
 - [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
+- [ ] fix typo in DAG
+- [ ] Add background colour to logo
