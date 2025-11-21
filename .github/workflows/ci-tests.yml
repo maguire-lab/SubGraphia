@@ -27,10 +27,10 @@ jobs:
           install-pdiff: true
 
       - name: Setup Micromamba
-          uses: mamba-org/setup-micromamba@v2
-          with:
-            micromamba-version: 'latest' 
-            init-shell: bash
+        uses: mamba-org/setup-micromamba@v2
+        with:
+          micromamba-version: 'latest' 
+          init-shell: bash
 
       - name: create input and database stubs
         run: 
