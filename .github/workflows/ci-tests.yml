@@ -29,8 +29,8 @@ jobs:
       - name: Setup Micromamba
           uses: mamba-org/setup-micromamba@v2
           with:
-            micromamba-version: 'latest' # or a specific version like '1.5.8'
-            cache-environment: true
+            micromamba-version: 'latest' 
+            init-shell: bash
 
       - name: create input and database stubs
         run: 
