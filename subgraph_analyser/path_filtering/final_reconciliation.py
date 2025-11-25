@@ -17,7 +17,7 @@ def reconcile(path_metadata_file, bam_summary_file, strictness):
     # add metadata header
     path_metadata.columns = ["path_id", "length", "taxid_lineage", "lineage", "coverage", "coverage_stdev"]
     # change rname to path_id in bam summary
-    bam_summary.columns = ["path_id", "inv_status", "abnormal_status", "abnormal_middle_status", "supplementary_status"]
+    bam_summary.columns = ["path_id", "inv_status", "abnormal_status", "abnormal_middle_status", "supplementary_status", "clipped_status"]
 
     # join bam summary to path metadata on path_id
     merged = pd.merge(path_metadata, bam_summary, on="path_id", how="right")
@@ -41,14 +41,14 @@ def reconcile(path_metadata_file, bam_summary_file, strictness):
 
     #Assign final status
     for index, row in merged.iterrows():
-        if row['inv_status'] == "keep" and row['abnormal_status'] == "keep":
+        if row['inv_status'] == "keep" and row['abnormal_status'] == "keep" and row['clipped_status'] == "keep":
             final_status[row['path_id']] = "strict"
-        elif row['inv_status'] == "keep" or row['abnormal_status'] == "keep":
+        elif row['inv_status'] == "keep" or row['abnormal_status'] == "keep" or row['clipped_status'] == "keep":
             final_status[row['path_id']] = "relaxed"
-        else: # both inv_status and abnormal_status are "discard"
+        else: # inv_status, abnormal_status, and clipped_status are "discard"
             final_status[row['path_id']] = "discard"
 
-    # find AROs that have no strict or relaxed paths, assign longest path relaxed status
+    # find AROs that have no strict or relaxed paths
     strict_or_relaxed_AROs = [key.split('_')[0] for key, value in final_status.items() if value in ["strict", "relaxed"]]
     all_AROs = list(number_of_paths_per_ARO.keys())
     no_strict_or_relaxed_AROs = list(set(all_AROs) - set(strict_or_relaxed_AROs))

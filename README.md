@@ -35,9 +35,9 @@ git clone https://github.com/maguire-lab/Subgraph_Analyser.git
 
 ## Set database paths
 - Edit `nextflow.config` to set the paths to the required databases in the standard and test profiles:
-    - kraken2 database path
-    - bakta database path
-    - gene multi-fasta file path (can use genes of interest or default CARD protein homolog AMR gene sequences)
+    - [kraken2 database](https://github.com/DerrickWood/kraken2/wiki/Manual#kraken-2-databases) path
+    - [bakta database](https://github.com/oschwengers/bakta?tab=readme-ov-file#installation) path
+    - gene multi-fasta file path (can use genes of interest or default [CARD](https://card.mcmaster.ca/download) protein homolog AMR gene sequences)
 - If databases are not found at the specified paths they will be downloaded automatically on first use in these locations (expect large disk space requirements)
 - See comments in `nextflow.config` for more information
 
@@ -76,8 +76,6 @@ Thank you for your interest in contributing to Subgraph Analyser! We use GitHub 
 ## to do list
 - [ ] Allow the same gene to be found multiple times in a graph to avoid errors
 - [ ] implement database download functionality for first use - needs a process
-- [ ] implement clipped read filtering criterion 
-- [ ] Add [nf-test badges](https://www.nf-test.com/tutorials/github-actions/) to README
 - [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
 - [ ] fix typo in DAG
 - [ ] Add background colour to logo

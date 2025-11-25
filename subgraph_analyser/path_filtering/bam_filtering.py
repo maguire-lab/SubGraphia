@@ -101,9 +101,33 @@ def get_supplementary_reads(bamfile):
     """
     pysam.samtools.view("-o","supplementary.bam","-f2048","-F1294","-@8",bamfile, catch_stdout=False)
 
+# Function to filter bamfile for clipped reads
+def get_clipped_reads(bamfile):
+    """
+    Function to filter bamfile for clipped reads. Will parse CIGAR string for S or H operations on either end of the read. Minimum clipping length can be set. Default is 5bp. 
+    input: bamfile
+    output: clipped_reads.bam
+    """
+    min_clip_length = 5
+    pysam.samtools.index(bamfile)
+    samfile = pysam.AlignmentFile(bamfile, "rb", threads=8)
+    outfile = pysam.AlignmentFile("clipped_reads.bam", "wb", template=samfile)
+    for read in samfile:
+        cigar = read.cigartuples
+        if cigar is not None:
+            # check for soft or hard clipping at the start
+            if cigar[0][0] in [4, 5] and cigar[0][1] >= min_clip_length:
+                outfile.write(read)
+                continue
+            # check for soft or hard clipping at the end
+            if cigar[-1][0] in [4, 5] and cigar[-1][1] >= min_clip_length:
+                outfile.write(read)
+                continue
+    samfile.close()
+    outfile.close()
 
 # Function to identify reference paths that meet filtration criteria
-def identify_paths_to_remove(inverted_discordant, abnormal_insert_reads, supplementary_reads):
+def identify_paths_to_remove(inverted_discordant, abnormal_insert_reads, clipped_reads, supplementary_reads):
     """
     Function to identify reference paths that meet filtration criteria.
     Filtration criteria:
@@ -134,9 +158,9 @@ def identify_paths_to_remove(inverted_discordant, abnormal_insert_reads, supplem
     #loop through each row in coverage_df to identify those that meet the criteria
     for index, row in coverage_df.iterrows():
         # Add rname to list if coverage is <90% or >10%
-        if row['coverage'] < 10 or row['coverage'] > 90:
+        if row['coverage'] < 25 or row['coverage'] > 75:
             invCoverage_criteria.append((row['rname'], 'keep'))
-        elif row['coverage'] >= 10 or row['coverage'] <= 90:
+        elif row['coverage'] >= 25 or row['coverage'] <= 75:
             invCoverage_criteria.append((row['rname'], 'discard'))
 
     ##Abnormal insert size reads
@@ -177,6 +201,37 @@ def identify_paths_to_remove(inverted_discordant, abnormal_insert_reads, supplem
         else:
             abnormal_middle_insertion.append((ref, 'no_abnormal_reads'))
 
+    # Calculate coverage of clipped reads in 10-30, 30-50, 50-70, 70-90% regions of each path
+    pysam.samtools.index(clipped_reads)
+    clipped_bam = pysam.AlignmentFile(clipped_reads, "rb", threads=8)
+    ref_lengths = {ref: length for ref, length in zip(clipped_bam.references, clipped_bam.lengths)}
+    clipped_bam.close()
+    clipped_df = pd.DataFrame()
+    for ref in sorted(ref_lengths.keys()):
+        length = ref_lengths[ref]
+        # run samtools coverage for each region
+        regions = [(0.1, 0.3), (0.3, 0.5), (0.5, 0.7), (0.7, 0.9)]
+        for start_frac, end_frac in regions:
+            start = int(length * start_frac)
+            end = int(length * end_frac)
+            region_output = pysam.samtools.coverage("-r", f"{ref}:{start}-{end}", clipped_reads, catch_stdout=True)
+            region_df = pd.read_csv(io.StringIO(region_output), sep="\t", header=None, names=header, index_col=False, comment="#")
+            clipped_df = pd.concat([clipped_df, region_df], ignore_index=True)
+    
+    # calculate mean and stdev of coverage for each path in clipped_df
+    coverage_stats = clipped_df.groupby('rname')['coverage'].agg(['mean', 'std']).reset_index()
+    coverage_stats.rename(columns={'mean': 'mean_coverage', 'std': 'std_coverage'}, inplace=True)
+    # # print clipped_df to csv
+    # coverage_stats.to_csv("clipped_reads_coverage_stats.csv", index=False)
+
+    #Assign keep/discard status based on coverage stats of clipped reads. If stdev > 15, discard, else keep
+    clipped_criteria = []
+    for index, row in coverage_stats.iterrows():
+        if row['std_coverage'] > 15:
+            clipped_criteria.append((row['rname'], 'discard'))
+        else:
+            clipped_criteria.append((row['rname'], 'keep'))
+
     ##Supplementary reads
     supplementary_criteria = []
     #index supplementary bam file
@@ -201,7 +256,7 @@ def identify_paths_to_remove(inverted_discordant, abnormal_insert_reads, supplem
     abnormal_df = pd.DataFrame(abnormalInsert_criteria, columns=['rname', 'abnormal_status'])
     abnormal_middle_df = pd.DataFrame(abnormal_middle_insertion, columns=['rname', 'abnormal_middle_status'])
     supplementary_df = pd.DataFrame(supplementary_criteria, columns=['rname', 'supplementary_status'])
-    combined_df = inv_df.merge(abnormal_df, on='rname', how='outer').merge(abnormal_middle_df, on='rname', how='outer').merge(supplementary_df, on='rname', how='outer')
+    combined_df = inv_df.merge(abnormal_df, on='rname', how='outer').merge(abnormal_middle_df, on='rname', how='outer').merge(supplementary_df, on='rname', how='outer').merge(pd.DataFrame(clipped_criteria, columns=['rname', 'clipped_status']), on='rname', how='outer')
     # fill NaN values in abnormal_status with 'no_abnormal_reads'
     combined_df['abnormal_status'] = combined_df['abnormal_status'].fillna('keep')
     combined_df['abnormal_middle_status'] = combined_df['abnormal_middle_status'].fillna('no_abnormal_reads')
@@ -221,4 +276,6 @@ if __name__ == "__main__":
     print("Abnormal insert size reads extracted to abnormal_insert.bam")
     get_supplementary_reads(bamfile)
     print("Supplementary reads extracted to supplementary.bam")
-    identify_paths_to_remove("inverted_discordant.bam", "abnormal_insert.bam", "supplementary.bam")
+    get_clipped_reads(bamfile)
+    print("Clipped reads extracted to clipped_reads.bam")
+    identify_paths_to_remove("inverted_discordant.bam", "abnormal_insert.bam", "clipped_reads.bam", "supplementary.bam")
