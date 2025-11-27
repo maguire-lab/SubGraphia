@@ -85,4 +85,6 @@ def process_graphaligner_output(graphaligner_output):
 if __name__ == '__main__':
     graphaligner_output = sys.argv[1]
     summarized_hits = process_graphaligner_output(graphaligner_output)
+    # must make ARO column unique. Add _instance_1,2,3 etc as a suffix
+    summarized_hits["ARO"] = summarized_hits.groupby("ARO").cumcount().add(1).astype(str).radd(summarized_hits["ARO"] + "inst")
     summarized_hits.to_csv(sys.argv[2], sep="\t", index=False)

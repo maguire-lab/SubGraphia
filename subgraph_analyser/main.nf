@@ -28,6 +28,10 @@ workflow {
     if (params.bakta_db == "specify_path") {
         error "ERROR: bakta database path must be specified in nextflow.config"
     }
+    // check that reads have been provided, R1 and R2 fastq files
+    if (params.reads == "specify_path") {
+        error "ERROR: reads must be specified in nextflow.config as a glob pattern e.g. '/path/to/reads/*_R{1,2}.fastq'"
+    }
     // run the subgraph extraction process if a graph is supplied
     if (params.graph != "specify_path") {
         DATABASE_CHECK(params.kraken_db, params.genes, params.bakta_db)
