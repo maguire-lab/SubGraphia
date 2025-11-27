@@ -1,4 +1,4 @@
-# Subgraph Analyser
+# SubGraphia
 [![CI NF-Tests Stub-run](https://github.com/maguire-lab/Subgraph_Analyser/actions/workflows/ci-tests.yml/badge.svg)](https://github.com/maguire-lab/Subgraph_Analyser/actions/workflows/ci-tests.yml)
 
 ![logo](./docs/logo.svg)
@@ -12,7 +12,7 @@
 
 Metagenomic data is very complex, containing many species with varying abundances. Metagenomic assembly often breaks in regions of assembly graph complexity, such as those caused by repeats within or between genomes; including genes shared between multiple species. The presence of these genes can often be identified via read mapping forgoing genomic context. However, understanding the genomic context of these genes is important for understanding their potential mobility and host(s). Querying the assembly graph has been shown to identify more genes precisely than querying assembled contigs alone. However, assembly graphs are large complex data structures and extracting meaningful information from them is not trivial.
 
-Subgraph Analyser is a pipeline designed to extract and analyse the sequence surrounding a gene/segment of interest in a subgraph. This pipeline is designed for AMR gene neighbourhood analysis, but can be used for any gene of interest. Following graph alignment, subgraphs surrounding alignments are extracted from the assembly-graph. In each subgraph all possible paths through the gene containing segment(s) are then determined. Following this, the pipeline aims to filter away the mis-assembled paths. Using Kraken2 a taxon is assigned to each graph segment, only paths that do not have conflicting taxonomic assignments are kept. Paths may also be subsets of each other except short graph segments; these are clustered using all-vs-all alignment. Finally, reads are aligned back to the path sequences. Paths that meet thresholds for abnormal read alignments, such as discordant reads and clipped reads, are filtered away. Path sequences that meet the above criteria are then outputted for further analysis. This includes identifying the species or multiple species that are most likely to be hosting the gene of interest, identify any mobile genetic elements, and annotate the remaining genes in the path. Subghraph Analyser is by nature less conservative than metagenomic assemblers, as with popular assemblers mis-assemblies are possible and users should be aware of this when interpreting results.
+SubGraphia is a pipeline designed to extract and analyse the sequence surrounding a gene/segment of interest in a subgraph. This pipeline is designed for AMR gene neighbourhood analysis, but can be used for any gene of interest. Following graph alignment, subgraphs surrounding alignments are extracted from the assembly-graph. In each subgraph all possible paths through the gene containing segment(s) are then determined. Following this, the pipeline aims to filter away the mis-assembled paths. Using Kraken2 a taxon is assigned to each graph segment, only paths that do not have conflicting taxonomic assignments are kept. Paths may also be subsets of each other except short graph segments; these are clustered using all-vs-all alignment. Finally, reads are aligned back to the path sequences. Paths that meet thresholds for abnormal read alignments, such as discordant reads and clipped reads, are filtered away. Path sequences that meet the above criteria are then outputted for further analysis. This includes identifying the species or multiple species that are most likely to be hosting the gene of interest, identify any mobile genetic elements, and annotate the remaining genes in the path. Subghraph Analyser is by nature less conservative than metagenomic assemblers, as with popular assemblers mis-assemblies are possible and users should be aware of this when interpreting results.
 
 ![logo](./docs/pipeline_DAG.png)
 
@@ -72,7 +72,7 @@ nextflow run main.nf --graph <path/to/graph.gfa> --reads <path/to/reads_R{1,2}.f
 - .gbff annotation files for each path
 
 # Contributing
-Thank you for your interest in contributing to Subgraph Analyser! We use GitHub for managing issues, contribution requests and everything else. So feel free to communicate with us using new issues and discussions, whatever best fits your idea for your contribution.
+Thank you for your interest in contributing to SubGraphia! We use GitHub for managing issues, contribution requests and everything else. So feel free to communicate with us using new issues and discussions, whatever best fits your idea for your contribution.
 ## to do list
 - [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
 - [ ] change dbcheck to look for dbs in projectdir first, then error if not found
