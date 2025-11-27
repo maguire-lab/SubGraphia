@@ -757,6 +757,18 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
                 path_lineage = node_lineage
             else: # path lineage is longer or equal to node lineage, continue
                 continue
+        #cut path_lineage off at the species rank if the lineages goes beyond
+        ranks = ncbi.get_rank(path_lineage)
+        if "species" in ranks.values():
+            #get the taxid for species rank
+            for taxid, rank in ranks.items():
+                if rank == "species":
+                    species_taxid = taxid
+            #get index of species taxid in path_lineage
+            species_index = path_lineage.index(species_taxid)
+            #cut path_lineage off at species index + 1
+            path_lineage = path_lineage[:species_index + 1]
+
         # convert path lineage to a string
         path_lineage = ",".join([str(taxid) for taxid in path_lineage])
 
@@ -766,11 +778,20 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
             path_lineage_names.append(ncbi.get_taxid_translator([int(taxid)])[int(taxid)])
         # convert path lineage names to a string
         path_lineage_names = ",".join(path_lineage_names)
+
+        #get the rank of the last taxid
+        LCA_rank = []
+        path_lineage_int = [int(taxid) for taxid in path_lineage.split(",")]
+        ranks = ncbi.get_rank(path_lineage_int)
+        print(ranks)
+        for taxid in path_lineage_int:
+            LCA_rank.append(ranks[taxid])
+        LCA_rank = LCA_rank[-1]
         
         # add the metadata for the path to the metadata list
-        metadata.append([path_id, path_length, path_lineage, path_lineage_names, median_coverage, stdev_coverage])
+        metadata.append([path_id, path_length, path_lineage, path_lineage_names, LCA_rank, median_coverage, stdev_coverage])
     # create a dataframe from the metadata list
-    metadata_df = pd.DataFrame(metadata, columns=["path_id", "path_length", "tax_id_lineage", "tax_ID_names", "median_coverage", "stdev_coverage"])
+    metadata_df = pd.DataFrame(metadata, columns=["path_id", "path_length", "tax_id_lineage", "tax_ID_names", "LCA_rank", "median_coverage", "stdev_coverage"])
     return metadata_df
 
 def path_to_fasta(directed_graph, congruent_paths, overlap):
