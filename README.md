@@ -75,9 +75,8 @@ nextflow run main.nf --graph <path/to/graph.gfa> --reads <path/to/reads_R{1,2}.f
 Thank you for your interest in contributing to SubGraphia! We use GitHub for managing issues, contribution requests and everything else. So feel free to communicate with us using new issues and discussions, whatever best fits your idea for your contribution.
 ## to do list
 - [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
+- [ ] Implement all v all core path trimming to reduce misassembly
 - [ ] change dbcheck to look for dbs in projectdir first, then error if not found
 - [ ] add versions output for software used
 - [ ] put scripts in a bin/ directory
 - [ ] Add container support (singularity/apptainer) 
-- [ ] fix typo in DAG
-- [ ] Add background colour to logo
