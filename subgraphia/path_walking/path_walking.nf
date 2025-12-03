@@ -137,7 +137,7 @@ process PATH_WALK {
     """
     #! /bin/bash
     # extract the specific target path from the graphaligner output corresponding to the subgraph
-    target_path=\$(grep ${subgraphs.baseName} $align | cut -f 6)
+    target_path=\$(grep -w ${subgraphs.baseName} $align | cut -f 6)
     # run the path walk script
     python3 ${projectDir}/path_walking/path_walk.py $subgraphs \$target_path $kraken_out $overlap $align
     """

@@ -642,7 +642,12 @@ def taxid_path_filter(kraken_out, full_paths, target_nodes, alignment_file):
 
             # if the path lineage is empty, set the node lineage as the path lineage and continue to the next segment
             if len(path_lineage) == 0:
-                path_lineage = node_lineage
+                if node_lineage is not None:
+                    path_lineage = node_lineage
+
+            # if node_lineage is nonetype, continue to the next segment. Lineage can be empty. 
+            if node_lineage is None:
+                continue
 
             # If the shorter of the two lineages is a subset of the longer lineage, set the longer lineage as the path lineage and continue to the next segment
             if len(node_lineage) < len(path_lineage):
@@ -715,13 +720,13 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
     # convert node_length_dict nodeIDs to strings and lengths to integers
     node_length_dict = {str(k):int(v) for k,v in node_length_dict.items()}
 
-    #create dictionary of nodeIDs and coverage from the directed graph
-    node_coverage_dict = {}
-    for node in directed_graph.nodes(data=True):
-        node_coverage_dict[node[0]] = node[1]["DP"]
+    # #create dictionary of nodeIDs and coverage from the directed graph
+    # node_coverage_dict = {}
+    # for node in directed_graph.nodes(data=True):
+    #     node_coverage_dict[node[0]] = node[1]["DP"]
 
-    # convert node_coverage_dict nodeIDs to strings and coverage to integers
-    node_coverage_dict = {str(k):int(v) for k,v in node_coverage_dict.items()}
+    # # convert node_coverage_dict nodeIDs to strings and coverage to integers
+    # node_coverage_dict = {str(k):int(v) for k,v in node_coverage_dict.items()}
 
     # create a list to store the metadata for each path
     metadata = []
@@ -732,17 +737,17 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
         path_id = gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index(path) + 1)
         # get the path length
         path_length = sum([node_length_dict[node] for node in path]) - (55 * (len(path)))
-        # get the median coverage of the path
-        path_coverage = [node_coverage_dict[node] for node in path]
+        # # get the median coverage of the path
+        # path_coverage = [node_coverage_dict[node] for node in path]
 
-        # if path has just one node, set median and stdev coverage to NA
-        if len(path) == 1:
-            median_coverage = "NA"
-            stdev_coverage = "NA"
-        else:
-            # calculate median and standard deviation of the coverage
-            median_coverage = statistics.median(path_coverage)
-            stdev_coverage = statistics.stdev(path_coverage)
+        # # if path has just one node, set median and stdev coverage to NA
+        # if len(path) == 1:
+        #     median_coverage = "NA"
+        #     stdev_coverage = "NA"
+        # else:
+        #     # calculate median and standard deviation of the coverage
+        #     median_coverage = statistics.median(path_coverage)
+        #     stdev_coverage = statistics.stdev(path_coverage)
         
         # get the longest taxID lineage for the path
         path_lineage = []
@@ -789,9 +794,13 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
         LCA_rank = LCA_rank[-1]
         
         # add the metadata for the path to the metadata list
-        metadata.append([path_id, path_length, path_lineage, path_lineage_names, LCA_rank, median_coverage, stdev_coverage])
+        metadata.append([path_id, path_length, path_lineage, path_lineage_names, LCA_rank, 
+                        #  median_coverage, stdev_coverage
+                        ])
     # create a dataframe from the metadata list
-    metadata_df = pd.DataFrame(metadata, columns=["path_id", "path_length", "tax_id_lineage", "tax_ID_names", "LCA_rank", "median_coverage", "stdev_coverage"])
+    metadata_df = pd.DataFrame(metadata, columns=["path_id", "path_length", "tax_id_lineage", "tax_ID_names", "LCA_rank", 
+                                                #   "median_coverage", "stdev_coverage"
+                                                  ])
     return metadata_df
 
 def path_to_fasta(directed_graph, congruent_paths, overlap):
