@@ -15,7 +15,7 @@ def reconcile(path_metadata_file, bam_summary_file, strictness):
     bam_summary = pd.read_csv(bam_summary_file, sep=",")
 
     # add metadata header
-    path_metadata.columns = ["path_id", "length", "taxid_lineage", "lineage", "coverage", "coverage_stdev"]
+    path_metadata.columns = ["path_id","path_length","tax_id_lineage","tax_ID_names","LCA_rank"]
     # change rname to path_id in bam summary
     bam_summary.columns = ["path_id", "inv_status", "abnormal_status", "abnormal_middle_status", "supplementary_status", "clipped_status"]
 
@@ -77,14 +77,15 @@ def reconcile(path_metadata_file, bam_summary_file, strictness):
 
     # make final_df nicer
     final_df = final_df[["path_id", 
-                         "length", 
+                         "path_length", 
                          "final_status", 
                         #  "abnormal_middle_status", # Could potentially include this column again in future, could be used for LGT detection
                         #  "supplementary_status", 
-                         "coverage", 
-                         "coverage_stdev", 
-                         "taxid_lineage", 
-                         "lineage"]]
+                        #  "coverage", 
+                        #  "coverage_stdev", 
+                         "tax_id_lineage", 
+                         "tax_ID_names",
+                         "LCA_rank"]]
 
     # make amr gene summary df
     # find number of paths per ARO after alignment clustering, this is number of paths per ARO in bam summary
