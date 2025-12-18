@@ -92,6 +92,8 @@ process SUBGRAPH_EXTRACT {
 
     tag "${graphID}"
 
+    // publishDir "$params.outdir/${graphID}/subgraphs/", mode: 'copy', pattern : '*.gfa'
+
     input:
     // input joined tuple of graph and graphaligner output
     tuple val(graphID), path(graph), path(align)
@@ -115,6 +117,8 @@ process SUBGRAPH_EXTRACT {
 
 process PATH_WALK {
     conda "${projectDir}/path_walking/path_walking.yml"
+
+    maxForks 8
 
     publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*congruent_paths.csv'
     publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*metadata.tsv'

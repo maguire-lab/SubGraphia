@@ -3,9 +3,11 @@
 process MINIMAP_REDUNDANCY_REMOVER {
     conda "${projectDir}/path_filtering/path_filtering.yml"
 
+    maxForks 8
+
     tag "${subgraphID}"
 
-    // publishDir "$params.outdir/path_filtering/${subgraphID}/", mode: 'symlink', pattern : '*.fasta'
+    publishDir "$params.outdir/paths/${subgraphID}/", mode: 'symlink', pattern : '*.fasta'
 
     input:
     tuple val(subgraphID), path(fasta)
@@ -148,4 +150,41 @@ process PATH_READ_ALN_FILTER {
     touch final_metadata.tsv
     touch AMR_genes_summary.tsv
     """
+}
+
+process LR_MINIMAP2 {
+    conda "${projectDir}/path_filtering/path_filtering.yml"
+
+    tag "${readID}"
+    
+    publishDir "$params.outdir/", mode: 'copy', pattern : '*.bam'
+
+    input:
+    //input only the fasta files from the channel
+    path(representative_fasta)
+    tuple val(readID), path(reads)
+
+    output:
+    tuple val(readID), path('*.bam'), emit: bam
+
+    script:
+    """
+    # concatenate all fasta files into single fasta file
+    cat $representative_fasta > all_paths.fasta
+
+    # index the fasta file
+    minimap2 -d all_paths.mmi all_paths.fasta
+
+    # align reads to all paths
+    minimap2 -ax map-ont -t 12 all_paths.mmi ${reads[0]} > out.sam
+
+    # convert sam to bam, sort and index
+    samtools sort --threads 12 -o all_paths_readaln.bam out.sam
+    rm out.sam
+    """
+    stub:
+    """
+    touch all_paths_readaln.bam
+    """
+    
 }

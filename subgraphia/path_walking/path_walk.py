@@ -28,6 +28,49 @@ def parse_to_directed_graph(gfa_input):
   print("Graph loaded with " + str(directed_graph.number_of_nodes()) + " nodes and " + str(directed_graph.number_of_edges()) + " edges")
   return directed_graph
 
+def ensure_segment_traversal(path, anchor_node, directed_graph):
+    """
+    nx.all_simple_paths does not take into account that segments have ends corresponding with the 5' and 3' ends of the sequence.
+    This function examines a simple path and ensures that each segments is being traversed by the edges rather than edges connecting to just one end of a segment.
+    A simple path does not take into account edge flipping and other assembly graph properties. Simplifies the problem as paths should be flowing out or in. 
+    
+    :param path: A list of node IDs representing a path through the graph, e.g. output of nx.all_simple_paths()
+    :param anchor_node: The node ID paths are being anchored to (starting or ending node)
+    :param directed_graph: Parsed .GFA graph from parse_to_directed_graph()
+    :return: Trimmed path that ensures segment traversal, whole path if all segments are traversed correctly
+    """
+
+    node_orients = {}
+    # if path_orient == "out":
+    # Iterate through the path
+    for i in range(len(path) - 1):
+        current_node = path[i]
+        next_node = path[i + 1]
+        edge = directed_graph.get_edge_data(current_node, next_node)
+        # set node orients based on edge attributes
+        from_node_orient = edge['from_orient']
+        to_node_orient = edge['to_orient']
+        # Assign orientations to node_orients, add orients rather than overwrite
+        if current_node not in node_orients:
+            node_orients[current_node] = set()
+        if next_node not in node_orients:
+            node_orients[next_node] = set()
+        node_orients[current_node].add(from_node_orient)
+        node_orients[next_node].add(to_node_orient)
+    # if any nodes in node_orients have more than one orientation, trim the path at that node (inclusive)
+    for i in range(len(path)):
+        node = path[i]
+        if len(node_orients[node]) > 1:
+            # Trim the path at this node (inclusive), keep side with anchor_node
+            if anchor_node == path[0]:
+                trimmed_path = path[:i]
+            elif anchor_node == path[-1]:
+                trimmed_path = path[i+1:]
+            else:
+                raise ValueError("Anchor node must be either the start or end of the path.")
+            return trimmed_path
+    return path
+
 def remove_nested_paths(paths):
     """
     Deterministically removes paths that are nested within longer paths.
@@ -119,7 +162,6 @@ def extract_paths(directed_graph, target_nodes):
     Returns:
     full_paths : A list of node IDs representing paths to and from the target nodes
     """
-
     ## parse target nodes into a tuple of edge direction and node ID, e.g. ('>', 'node1') or ('<', 'node2')
     # if target nodes is a list, convert target nodes list to a string, necessary for command line input, may not be if read from the graphaligner output file
     if isinstance(target_nodes, list):
@@ -135,7 +177,6 @@ def extract_paths(directed_graph, target_nodes):
     target_nodes = [(target_nodes[i], target_nodes[i+1]) for i in range(0, len(target_nodes), 2)]
 
     ### DM: ADD A CHECK TO SEE IF THE TARGET NODES FORM A LINEAR PATH, IF NOT, PRINT A MESSAGE AND EXIT THE FUNCTION ###
-
 
     # The longest target node will be set as the anchor node from which edges and paths will be found. Any paths that do not contain the complete target node path will be discarded.
     # find the longest target node
@@ -189,12 +230,18 @@ def extract_paths(directed_graph, target_nodes):
         # find paths between nodes in ancestors and the target node
         for ancestor in ancestors:
             in_paths.extend([path for path in nx.all_simple_paths(directed_graph, ancestor, anchor_node)])
-            
+        
+        # confirm segment traversal for each path
+        in_paths_validated = []
+        for path in in_paths:
+            validated_path = ensure_segment_traversal(path, anchor_node, directed_graph)
+            in_paths_validated.append(validated_path)
+
         # remove paths that do not contain all the target nodes
-        in_paths = [path for path in in_paths if set([node[1] for node in target_nodes]).issubset(set(path))]
+        in_paths_validated = [path for path in in_paths_validated if set([node[1] for node in target_nodes]).issubset(set(path))]
 
         # remove paths that are nested within longer paths
-        in_paths = remove_nested_paths(in_paths)
+        in_paths_validated = remove_nested_paths(in_paths_validated)
 
         # Need to join in_paths together IF the in_edges connecting them to the target node have opposite target node orientations
         # find the orientations of the in edges connecting the target node to the ancestors
@@ -208,7 +255,7 @@ def extract_paths(directed_graph, target_nodes):
             # bin paths into + and - paths using the target_orient_dict
             right_orient_paths = []
             left_orient_paths = []
-            for path in in_paths:
+            for path in in_paths_validated:
                 for node in sorted(target_orient_dict):
                     if node in path:
                         if target_orient_dict[node] == "+":
@@ -226,7 +273,7 @@ def extract_paths(directed_graph, target_nodes):
                     full_paths.append(right_path + left_path)
         # if all in edges have the same orientation, add paths to full paths
         else:
-            full_paths.extend(in_paths)
+            full_paths.extend(in_paths_validated)
 
         #if no paths are found, add target nodes to full paths with a message that no paths were found
         if len(full_paths) == 0:
@@ -240,12 +287,17 @@ def extract_paths(directed_graph, target_nodes):
         # find paths between nodes in decendants and the target node
         for decendant in decendants:
             out_paths.extend([path for path in nx.all_simple_paths(directed_graph, anchor_node, decendant)])
-        
+        # confirm segment traversal for each path
+        out_paths_validated = []
+        for path in out_paths:
+            validated_path = ensure_segment_traversal(path, anchor_node, directed_graph)
+            out_paths_validated.append(validated_path)
+
         # remove paths that do not contain all the target nodes
-        out_paths = [path for path in out_paths if set([node[1] for node in target_nodes]).issubset(set(path))]
+        out_paths_validated = [path for path in out_paths_validated if set([node[1] for node in target_nodes]).issubset(set(path))]
 
         # remove paths that are nested within longer paths
-        out_paths = remove_nested_paths(out_paths)
+        out_paths_validated = remove_nested_paths(out_paths_validated)
         
         # Need to join out_paths together IF the out_edges connecting them to the target node have opposite target node orientations
         # find the orientations of the out edges connecting the target node to the decendants
@@ -258,7 +310,7 @@ def extract_paths(directed_graph, target_nodes):
             # bin paths into + and - paths using the target_orient_dict
             right_orient_paths = []
             left_orient_paths = []
-            for path in out_paths:
+            for path in out_paths_validated:
                 for node in sorted(target_orient_dict):
                     if node in path:
                         if target_orient_dict[node] == "+":
@@ -276,7 +328,7 @@ def extract_paths(directed_graph, target_nodes):
 
         # if all out edges have the same orientation, add paths to full paths
         else:
-            full_paths.extend(out_paths)
+            full_paths.extend(out_paths_validated)
 
         #if no paths are found, add target nodes to full paths with a message that no paths were found
         if len(full_paths) == 0:
@@ -291,9 +343,14 @@ def extract_paths(directed_graph, target_nodes):
         # find paths between nodes in ancestors and the target node
         for ancestor in ancestors:
             in_paths.extend([path for path in nx.all_simple_paths(directed_graph, ancestor, anchor_node)])
-        
+        # confirm segment traversal for each path
+        in_paths_validated = []
+        for path in in_paths:
+            validated_path = ensure_segment_traversal(path, anchor_node, directed_graph)
+            in_paths_validated.append(validated_path)
+
         # remove nested paths
-        in_paths = remove_nested_paths(in_paths)
+        in_paths_validated = remove_nested_paths(in_paths_validated)
 
         #collect in_path orientations (sort edge list for deterministic behaviour)
         in_orient_dict = collect_orientations(directed_graph, sorted(list(anchor_node_in_edges)), anchor_node)
@@ -301,7 +358,7 @@ def extract_paths(directed_graph, target_nodes):
         # bin paths into + and - paths using the in_orient_dict
         right_in_paths = []
         left_in_paths = []
-        for path in in_paths:
+        for path in in_paths_validated:
             for node in sorted(in_orient_dict):
                 if node in path:
                     if in_orient_dict[node] == "+":
@@ -314,9 +371,14 @@ def extract_paths(directed_graph, target_nodes):
         # find paths between nodes in decendants and the target node
         for decendant in decendants:
             out_paths.extend([path for path in nx.all_simple_paths(directed_graph, anchor_node, decendant)])
+        # confirm segment traversal for each path
+        out_paths_validated = []
+        for path in out_paths:
+            validated_path = ensure_segment_traversal(path, anchor_node, directed_graph)
+            out_paths_validated.append(validated_path)
 
         # remove nested paths
-        out_paths = remove_nested_paths(out_paths)
+        out_paths_validated = remove_nested_paths(out_paths_validated)
 
         #collect out_path orientations (sort edge list for deterministic behaviour)
         out_orient_dict = collect_orientations(directed_graph, sorted(list(anchor_node_out_edges)), anchor_node)
@@ -324,7 +386,7 @@ def extract_paths(directed_graph, target_nodes):
         # bin paths into + and - paths using the out_orient_dict
         right_out_paths = []
         left_out_paths = []
-        for path in out_paths:
+        for path in out_paths_validated:
             for node in sorted(out_orient_dict):
                 if node in path:
                     if out_orient_dict[node] == "+":

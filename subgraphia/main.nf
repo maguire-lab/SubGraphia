@@ -14,7 +14,7 @@ Channel
 
 // Import processes
 include {DATABASE_CHECK; GRAPHALIGNER; GFAKRAKEN2; SUBGRAPH_EXTRACT; PATH_WALK} from "${projectDir}/path_walking/path_walking.nf"
-include {MINIMAP_REDUNDANCY_REMOVER; BWAMEM2; BAM_FILTER; PATH_READ_ALN_FILTER} from "${projectDir}/path_filtering/path_filtering.nf"
+include {MINIMAP_REDUNDANCY_REMOVER; BWAMEM2; BAM_FILTER; PATH_READ_ALN_FILTER; LR_MINIMAP2} from "${projectDir}/path_filtering/path_filtering.nf"
 include {BAKTA} from "${projectDir}/annotation/annotation.nf"
 
 workflow {
@@ -41,11 +41,16 @@ workflow {
         subgraph_output = SUBGRAPH_EXTRACT.out.subgraphs.join(GRAPHALIGNER.out.align).join(GFAKRAKEN2.out.kraken_out).transpose()
         PATH_WALK(subgraph_output, params.overlap)
         MINIMAP_REDUNDANCY_REMOVER(PATH_WALK.out.fasta)
-        BWAMEM2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
-        BAM_FILTER(BWAMEM2.out.bam)
-        PATH_READ_ALN_FILTER(BAM_FILTER.out.bam_summary, PATH_WALK.out.metadata.collect(), MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), params.strictness)
-        BAKTA(PATH_READ_ALN_FILTER.out.filtered_fasta.transpose(), params.bakta_db)
-        
+        if (files(params.reads).size() > 1) {
+            BWAMEM2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
+            BAM_FILTER(BWAMEM2.out.bam)
+            PATH_READ_ALN_FILTER(BAM_FILTER.out.bam_summary, PATH_WALK.out.metadata.collect(), MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), params.strictness)
+            // BAKTA(PATH_READ_ALN_FILTER.out.filtered_fasta.transpose(), params.bakta_db)
+        }
+        else if (files(params.reads).size() == 1) {
+            LR_MINIMAP2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
+        }
+                
     }
     else {
         error "Usage: nextflow run main.nf --graph <path_to_graph> --reads <path_to_reads>"

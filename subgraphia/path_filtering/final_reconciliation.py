@@ -57,7 +57,7 @@ def reconcile(path_metadata_file, bam_summary_file, strictness):
     for aro in no_strict_or_relaxed_AROs:
         aro_paths = merged[merged['ARO'] == aro]
         # Assign the longest path relaxed status
-        longest_path = aro_paths.loc[aro_paths['length'].idxmax()]
+        longest_path = aro_paths.loc[aro_paths['path_length'].idxmax()]
         final_status[longest_path['path_id']] = "relaxed"
 
     # add final status to merged dataframe

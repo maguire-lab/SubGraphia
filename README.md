@@ -80,3 +80,6 @@ Thank you for your interest in contributing to SubGraphia! We use GitHub for man
 - [ ] add versions output for software used
 - [ ] put scripts in a bin/ directory
 - [ ] Add container support (singularity/apptainer) 
+- [ ] Automate overlap param
+- [ ] Add AMR gene position to metadata
+- [ ] feature: if no paths pass strict filtering, add graphaligner segments as path? 
