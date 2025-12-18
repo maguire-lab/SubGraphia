@@ -22,11 +22,14 @@ def parse_to_directed_graph(gfa_input):
   #get edges from gfa_graph
   edges = [line for line in gfa_graph.lines if isinstance(line, gfapy.Line) and line.record_type == "L"]
 
+  # get overlap length from edges
+  overlap = int(str(edges[0].overlap)[:-1])
+
   for edge in edges:
     directed_graph.add_edge(edge.from_segment.name, edge.to_segment.name, from_orient = edge.from_orient, to_orient = edge.to_orient)
   
   print("Graph loaded with " + str(directed_graph.number_of_nodes()) + " nodes and " + str(directed_graph.number_of_edges()) + " edges")
-  return directed_graph
+  return directed_graph, overlap
 
 def ensure_segment_traversal(path, anchor_node, directed_graph):
     """
@@ -987,10 +990,9 @@ if __name__ == '__main__':
     gfa_input = sys.argv[1]
     target_nodes = sys.argv[2].split(",")
     kraken_out = sys.argv[3]
-    overlap = int(sys.argv[4])
-    alignment_file = sys.argv[5]
+    alignment_file = sys.argv[4]
     
-    directed_graph = parse_to_directed_graph(gfa_input)
+    directed_graph, overlap = parse_to_directed_graph(gfa_input)
     
     full_paths = extract_paths(directed_graph, target_nodes)
     print("Number of original paths found: " + str(len(full_paths)))

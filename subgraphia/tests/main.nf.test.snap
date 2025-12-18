@@ -7,36 +7,36 @@
             "nf-test": "0.9.3",
             "nextflow": "24.10.4"
         },
-        "timestamp": "2025-10-30T15:30:13.445967998"
+        "timestamp": "2025-12-18T13:09:03.718744528"
     },
     "amr_gene_summary": {
         "content": [
-            "AMR_genes_summary.tsv:md5,077b18b397d7b7d656db8d49bffc77aa"
+            "AMR_genes_summary.tsv:md5,792f77b8e06c97cef148ed1a6e73c79f"
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "24.10.4"
         },
-        "timestamp": "2025-10-30T15:30:13.474264668"
+        "timestamp": "2025-12-18T13:09:03.751546406"
     },
     "graphaligner": {
         "content": [
-            "3002274_test_GA_locus.tsv:md5,70a62ef563f5df19bd3315d36270482a"
+            "3002274_test_GA_locus.tsv:md5,c3612e4dd875585668520bbf26d9fd26"
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "24.10.4"
         },
-        "timestamp": "2025-10-30T15:30:13.432646605"
+        "timestamp": "2025-12-18T13:09:03.702141411"
     },
     "final_metadata": {
         "content": [
-            "final_metadata.tsv:md5,b5c45ed512c7cc6aa8481ec0c41fc987"
+            "final_metadata.tsv:md5,9b460711304a79528b0eaf691e87afbb"
         ],
         "meta": {
             "nf-test": "0.9.3",
             "nextflow": "24.10.4"
         },
-        "timestamp": "2025-10-30T15:30:13.486159345"
+        "timestamp": "2025-12-18T13:09:03.76567151"
     }
 }

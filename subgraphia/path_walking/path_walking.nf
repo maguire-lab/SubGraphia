@@ -130,8 +130,6 @@ process PATH_WALK {
     //input joined tuple of subgraph, graphaligner output, and kraken output
     tuple val(graphID), path(subgraphs), path(align), path(kraken_out)
 
-    val(overlap)
-
     output:
     tuple val(graphID), path('*congruent_paths.csv'), emit: paths
     path('*metadata.tsv'), emit: metadata
@@ -143,7 +141,7 @@ process PATH_WALK {
     # extract the specific target path from the graphaligner output corresponding to the subgraph
     target_path=\$(grep -w ${subgraphs.baseName} $align | cut -f 6)
     # run the path walk script
-    python3 ${projectDir}/path_walking/path_walk.py $subgraphs \$target_path $kraken_out $overlap $align
+    python3 ${projectDir}/path_walking/path_walk.py $subgraphs \$target_path $kraken_out $align
     """
     stub:
     """

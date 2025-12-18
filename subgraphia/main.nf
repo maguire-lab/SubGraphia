@@ -39,7 +39,7 @@ workflow {
         GFAKRAKEN2(graph, params.kraken_db, DATABASE_CHECK.out.db_check)
         SUBGRAPH_EXTRACT(graph.join(GRAPHALIGNER.out.align), params.radius)
         subgraph_output = SUBGRAPH_EXTRACT.out.subgraphs.join(GRAPHALIGNER.out.align).join(GFAKRAKEN2.out.kraken_out).transpose()
-        PATH_WALK(subgraph_output, params.overlap)
+        PATH_WALK(subgraph_output)
         MINIMAP_REDUNDANCY_REMOVER(PATH_WALK.out.fasta)
         if (files(params.reads).size() > 1) {
             BWAMEM2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
