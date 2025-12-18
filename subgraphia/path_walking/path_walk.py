@@ -23,7 +23,10 @@ def parse_to_directed_graph(gfa_input):
   edges = [line for line in gfa_graph.lines if isinstance(line, gfapy.Line) and line.record_type == "L"]
 
   # get overlap length from edges
-  overlap = int(str(edges[0].overlap)[:-1])
+  if edges:
+    overlap = int(str(edges[0].overlap)[:-1])
+  else:
+    overlap = 0
 
   for edge in edges:
     directed_graph.add_edge(edge.from_segment.name, edge.to_segment.name, from_orient = edge.from_orient, to_orient = edge.to_orient)
@@ -912,11 +915,17 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
                     node_orient = in_edge_data['to_orient']
                 # trim overlap from the right end of the sequence
                 if node_orient == "+": #do not reverse complement
-                    trimmed_sequence = node_data['sequence'][:-overlap]
+                    if overlap >0:
+                        trimmed_sequence = node_data['sequence'][:-overlap]
+                    else:
+                        trimmed_sequence = node_data['sequence']
                     path_sequence = trimmed_sequence
                 elif node_orient == "-": #reverse complement
                     RC_sequence = Seq(node_data['sequence']).reverse_complement()
-                    trimmed_sequence = str(RC_sequence)[:-overlap]
+                    if overlap >0:
+                        trimmed_sequence = str(RC_sequence)[:-overlap]
+                    else:
+                        trimmed_sequence = str(RC_sequence)
                     path_sequence = trimmed_sequence
 
             # skip if at the last node
@@ -940,7 +949,10 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
                 # directionality matches, reverse complement as normal
                 node_data = directed_graph.nodes[path[path.index(node) + 1]]
                 if node_orient == "+":
-                    trimmed_sequence = node_data['sequence'][:-overlap]
+                    if overlap >0:
+                        trimmed_sequence = node_data['sequence'][:-overlap]
+                    else:
+                        trimmed_sequence = node_data['sequence']
                     #if the path direction is "out" add trimmed sequence to the end of the path sequence
                     if path_dir == "out":
                         path_sequence += trimmed_sequence
@@ -949,7 +961,10 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
                         path_sequence = trimmed_sequence + path_sequence
                 elif node_orient == "-":
                     RC_sequence = Seq(node_data['sequence']).reverse_complement()
-                    trimmed_sequence = str(RC_sequence)[:-overlap]
+                    if overlap >0:
+                        trimmed_sequence = str(RC_sequence)[:-overlap]
+                    else:
+                        trimmed_sequence = str(RC_sequence)
                     #if the path direction is "out" add trimmed sequence to the end of the path sequence
                     if path_dir == "out":
                         path_sequence += trimmed_sequence
@@ -961,7 +976,10 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
                 node_data = directed_graph.nodes[path[path.index(node) + 1]]
                 if node_orient == "+": 
                     RC_sequence = Seq(node_data['sequence']).reverse_complement()
-                    trimmed_sequence = str(RC_sequence)[:-overlap]
+                    if overlap >0:
+                        trimmed_sequence = str(RC_sequence)[:-overlap]
+                    else:
+                        trimmed_sequence = str(RC_sequence)
                     #if the path direction is "out" add trimmed sequence to the end of the path sequence
                     if path_dir == "out":
                         path_sequence += trimmed_sequence
@@ -969,7 +987,10 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
                     elif path_dir == "in":
                         path_sequence = trimmed_sequence + path_sequence
                 elif node_orient == "-":
-                    trimmed_sequence = node_data['sequence'][:-overlap]
+                    if overlap >0:
+                        trimmed_sequence = node_data['sequence'][:-overlap]
+                    else:
+                        trimmed_sequence = node_data['sequence']
                     #if the path direction is "out" add trimmed sequence to the end of the path sequence
                     if path_dir == "out":
                         path_sequence += trimmed_sequence
