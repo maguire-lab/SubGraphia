@@ -188,3 +188,76 @@ process LR_MINIMAP2 {
     """
     
 }
+
+process LR_BAM_FILTER {
+
+    conda "${projectDir}/path_filtering/path_filtering.yml"
+
+    publishDir "$params.outdir/", mode: 'copy', pattern : 'bam_filtering_summary.csv'
+
+    tag "${readID}"
+
+    input:
+    tuple val(readID), path(bam)
+
+    output:
+    tuple val(readID), path('*_summary.csv'), emit: bam_summary
+
+    script:
+    """
+    python3 ${projectDir}/path_filtering/LR_bam_filtering.py $bam
+    """
+    stub:
+    """
+    touch ${readID}_summary.csv
+    """
+
+}
+
+process LR_FINAL_RECONCILIATION {
+
+    conda "${projectDir}/path_filtering/path_filtering.yml"
+
+    publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
+    publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
+    publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
+
+    tag "${readID}"
+
+    input:
+    tuple val(readID), path(bam_summary)
+    path(metadata)
+    path(representative_fasta)
+    val(strictness)
+
+    output:
+    tuple val(readID), path('*.fa'), emit: filtered_fasta
+    tuple val(readID), path('*final_metadata.tsv'), emit: filtered_metadata
+    tuple val(readID), path('AMR_genes_summary.tsv'), emit: amr_summary
+
+    script:
+    """
+    #concatenate all metadata files into single metadata file
+    cat $metadata | grep -v path_id > all_metadata.tsv
+    #run the filtering script
+    python3 ${projectDir}/path_filtering/LR_final_reconciliation.py all_metadata.tsv $bam_summary $strictness
+
+    #concatenate all fasta files into single fasta file
+    cat $representative_fasta > all_rep.fasta
+
+    # extract the IDs of the filtered paths from the final_metadata.tsv, exclude header
+    cut -f1 final_metadata.tsv | tail -n +2 > filtered_path_ids.txt
+
+    # extract the filtered paths from all_rep.fasta using samtools
+    while read -r line; do
+        samtools faidx all_rep.fasta "\$line" > "\$line.fa"
+    done < filtered_path_ids.txt
+    """
+    stub:
+    """
+    touch filtered_path1.fa
+    touch filtered_path2.fa
+    touch final_metadata.tsv
+    touch AMR_genes_summary.tsv
+    """
+}
