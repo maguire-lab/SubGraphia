@@ -14,7 +14,7 @@ Channel
 
 // Import processes
 include {DATABASE_CHECK; GRAPHALIGNER; GFAKRAKEN2; SUBGRAPH_EXTRACT; PATH_WALK} from "${projectDir}/path_walking/path_walking.nf"
-include {MINIMAP_REDUNDANCY_REMOVER; BWAMEM2; BAM_FILTER; PATH_READ_ALN_FILTER; LR_MINIMAP2; LR_BAM_FILTER; LR_FINAL_RECONCILIATION} from "${projectDir}/path_filtering/path_filtering.nf"
+include {MINIMAP_REDUNDANCY_REMOVER; BWAMEM2; BAM_FILTER; PATH_READ_ALN_FILTER; LR_MINIMAP2; LR_BAM_FILTER; LR_FINAL_RECONCILIATION; MINIMAP_TRIM_PATHS} from "${projectDir}/path_filtering/path_filtering.nf"
 include {BAKTA} from "${projectDir}/annotation/annotation.nf"
 
 workflow {
@@ -45,13 +45,15 @@ workflow {
             BWAMEM2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
             BAM_FILTER(BWAMEM2.out.bam)
             PATH_READ_ALN_FILTER(BAM_FILTER.out.bam_summary, PATH_WALK.out.metadata.collect(), MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), params.strictness)
-            // BAKTA(PATH_READ_ALN_FILTER.out.filtered_fasta.transpose(), params.bakta_db)
+            MINIMAP_TRIM_PATHS(PATH_READ_ALN_FILTER.out.filtered_fasta.collect(), PATH_READ_ALN_FILTER.out.filtered_metadata, PATH_READ_ALN_FILTER.out.amr_summary)
+            BAKTA(MINIMAP_TRIM_PATHS.out.trimmed_fasta.transpose(), params.bakta_db)
         }
         else if (files(params.reads).size() == 1) {
             LR_MINIMAP2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
             LR_BAM_FILTER(LR_MINIMAP2.out.bam)
             LR_FINAL_RECONCILIATION(LR_BAM_FILTER.out.bam_summary, PATH_WALK.out.metadata.collect(), MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), params.strictness)
-            // BAKTA(LR_FINAL_RECONCILIATION.out.filtered_fasta.transpose(), params.bakta_db)
+            MINIMAP_TRIM_PATHS(LR_FINAL_RECONCILIATION.out.filtered_fasta.collect(), LR_FINAL_RECONCILIATION.out.filtered_metadata, LR_FINAL_RECONCILIATION.out.amr_summary)
+            BAKTA(MINIMAP_TRIM_PATHS.out.trimmed_fasta.transpose(), params.bakta_db)
         }
                 
     }

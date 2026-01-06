@@ -43,9 +43,9 @@ git clone https://github.com/maguire-lab/Subgraph_Analyser.git
 
 ## Test the pipeline
 - [Download test data](https://doi.org/10.17605/OSF.IO/KDNM8) from the Open Science Framework (OSF) repository
-- Run download script in the `subgraph_analyser` directory
+- Run download script in the `subgraphia` directory
 ```bash
-cd Subgraph_Analyser/subgraph_analyser
+cd Subgraph_Analyser/subgraphia
 sh test_data_download.sh
 ```
 
@@ -74,8 +74,7 @@ nextflow run main.nf --graph <path/to/graph.gfa> --reads <path/to/reads_R{1,2}.f
 # Contributing
 Thank you for your interest in contributing to SubGraphia! We use GitHub for managing issues, contribution requests and everything else. So feel free to communicate with us using new issues and discussions, whatever best fits your idea for your contribution.
 ## to do list
-- [ ] Implement long read support -> minimap2 for read mapping steps, alternate filtering criteria
-- [ ] Implement all v all core path trimming to reduce misassembly
+- [ ] update strictness outputs
 - [ ] change dbcheck to look for dbs in projectdir first, then error if not found
 - [ ] add versions output for software used
 - [ ] put scripts in a bin/ directory
@@ -83,3 +82,4 @@ Thank you for your interest in contributing to SubGraphia! We use GitHub for man
 - [ ] Add AMR gene position to metadata
 - [ ] feature: if no paths pass strict filtering, add graphaligner segments as path? 
 - [ ] Update test assertions
+- [ ] --reads not finding both R1 and R2 when using glob pattern

@@ -120,8 +120,8 @@ process PATH_WALK {
 
     maxForks 8
 
-    publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*congruent_paths.csv'
-    publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*metadata.tsv'
+    // publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*congruent_paths.csv'
+    // publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*metadata.tsv'
     // publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'symlink', pattern : '*.fasta'
 
     tag "${graphID}"

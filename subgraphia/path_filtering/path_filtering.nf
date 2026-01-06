@@ -7,7 +7,7 @@ process MINIMAP_REDUNDANCY_REMOVER {
 
     tag "${subgraphID}"
 
-    publishDir "$params.outdir/paths/${subgraphID}/", mode: 'symlink', pattern : '*.fasta'
+    // publishDir "$params.outdir/paths/${subgraphID}/", mode: 'symlink', pattern : '*.fasta'
 
     input:
     tuple val(subgraphID), path(fasta)
@@ -108,9 +108,9 @@ process PATH_READ_ALN_FILTER {
 
     conda "${projectDir}/path_filtering/path_filtering.yml"
 
-    publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
-    publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
-    publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
+    // publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
+    // publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
+    // publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
 
     tag "${readID}"
 
@@ -218,9 +218,9 @@ process LR_FINAL_RECONCILIATION {
 
     conda "${projectDir}/path_filtering/path_filtering.yml"
 
-    publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
-    publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
-    publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
+    // publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
+    // publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
+    // publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
 
     tag "${readID}"
 
@@ -261,3 +261,42 @@ process LR_FINAL_RECONCILIATION {
     touch AMR_genes_summary.tsv
     """
 }
+
+process MINIMAP_TRIM_PATHS {
+    conda "${projectDir}/path_filtering/path_filtering.yml"
+
+    tag "${readID}"
+
+    publishDir "$params.outdir/paths/", mode: 'symlink', pattern : '*.fasta'
+    publishDir "$params.outdir/", mode: 'copy', pattern : 'metadata.tsv'
+    publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
+
+    input:
+    tuple val(readID), path(filtered_fasta)
+    tuple val(readID), path(filtered_metadata)
+    tuple val(readID), path(amr_summary)
+
+    output:
+    tuple val(readID), path('*.fasta'), emit: trimmed_fasta
+    tuple val(readID), path('metadata.tsv'), emit: trimmed_metadata
+    tuple val(readID), path('AMR_genes_summary.tsv'), emit: trimmed_amr_summary
+
+    script:
+    """
+    # concatenate all filtered fasta files into single fasta file
+    cat $filtered_fasta > all_filtered_paths.fasta
+    #run minimap2
+    minimap2 -x asm5 -t 8 all_filtered_paths.fasta all_filtered_paths.fasta > tmp.tsv
+    cut -f1-11 tmp.tsv > ava_mm_out.tsv
+    rm tmp.tsv
+    # run trimming script on output
+    python3 ${projectDir}/path_filtering/trim_paths.py all_filtered_paths.fasta ava_mm_out.tsv $filtered_metadata $amr_summary
+    """
+    stub:
+    """
+    touch trimmed_path1.fasta
+    touch trimmed_path2.fasta
+    touch metadata.tsv
+    touch AMR_genes_summary.tsv
+    """
+    }
