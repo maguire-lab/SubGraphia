@@ -28,8 +28,10 @@ def process_graphaligner_output(graphaligner_output):
     # calculate percent query coverage
     graphaligner_df["perc_query_cov"] = (graphaligner_df["query_end"] - graphaligner_df["query_start"])/graphaligner_df["query_length"]
 
-    # separate out query column 
-    graphaligner_df[["query_name", "ARO", "family"]] = graphaligner_df["query"].str.split("|", expand=True)
+    # separate out query column "gb|AF028812.1|+|392-887|ARO:3002867|dfrF [Enterococcus faecalis]"
+    graphaligner_df[["db","accn","strand","coords","ARO","gene"]] = graphaligner_df["query"].str.split("|", expand=True)
+    # extract ARO number only
+    graphaligner_df["ARO"] = graphaligner_df["ARO"].str.split(":").str[1]
 
     # filter away any hits less than 50% query coverage or 50% identity
     graphaligner_df = graphaligner_df[graphaligner_df["perc_query_cov"] >= 0.5]

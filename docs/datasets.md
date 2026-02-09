@@ -147,6 +147,9 @@ Real examples or artifical LGTs between reference genomes used to create the dat
 - Simulation command LR: ```simulator.py metagenome -gl ww_nanosim_assembly_paths_infile.tsv -a ww_nanosim_abundance_infile.tsv -dl ww_nanosim_dna_type_infile.tsv -c ../nano_sim_model/metagenome_ERR3152364_Even_v3.2.2/training --chimeric -t 12 --fastq```
     - nanosim version 3.2.2
 - filtlong v0.3.1 command ```filtlong --min_length 1000 --keep_percent 90 simulated_sample0_aligned_reads.fastq```
+- rename reads ```seqkit replace -p ".+" -r "read_{nr}" input.fastq.gz -o output.fastq.gz ```
+- save old read names ```sed -n '1~4p' input.fastq | cut -c 2- > read_names.txt```
+- flye v2.9.6 command ``` flye --nano-corr ww_filtlong_out.fastq --meta --out-dir ww_flye_out --threads 16```
 
 ### Included LGTs:
     1) Klebsiella pneumoniae to Escherichia coli - in silico 
@@ -230,6 +233,9 @@ Real examples or artifical LGTs between reference genomes used to create the dat
 - Simulation command LR: ```simulator.py metagenome -gl mp_nanosim_assembly_paths_infile.tsv -a mp_nanosim_abundance_infile.tsv -dl mp_nanosim_dna_type_infile.tsv -c ../nano_sim_model/metagenome_ERR3152364_Even_v3.2.2/training --chimeric -t 12 --fastq```
     - nanosim version 3.2.2
 - filtlong v0.3.1 command ```filtlong --min_length 1000 --keep_percent 90 simulated_sample0_aligned_reads.fastq```
+- rename reads ```seqkit replace -p ".+" -r "read_{nr}" input.fastq.gz -o output.fastq.gz ```
+- save old read names ```sed -n '1~4p' input.fastq | cut -c 2- > read_names.txt```
+- flye v2.9.6 command ``` flye --nano-corr mp_filtlong_out.fastq --meta --out-dir mp_flye_out --threads 16```
 
 ### Included LGTs:
     1) Klebsiella pneumoniae to Escherichia coli - in silico 
@@ -321,6 +327,7 @@ Real examples or artifical LGTs between reference genomes used to create the dat
     - fastp v1.1.0 command ```fastp -i ERR5321934_1.fastq -I ERR5321934_2.fastq -o hc227_fastpOut_reads_R1.fastq -O hc227_fastpOut_reads_R2.fastq```
     - metaspades v3.15.5 command ```spades.py -1 hc227_fastpOut_reads_R1.fastq -2 hc227_fastpOut_reads_R2.fastq --meta -m 300 -o hc227_metaspades_out```
     - filtlong v0.3.1 command ```filtlong --min_length 1000 --keep_percent 90 ERR6109821.fastq```
+    - flye v2.9.6 command ``` flye --nano-corr hc227_filtlong_out.fastq --meta --out-dir hc227_flye_out --threads 16```
 
 
 # Simulation process
