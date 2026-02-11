@@ -28,6 +28,11 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
     df = df[df['qname'] != df['tname']]
     # calculate % identity and % query coverage
     mm_out = calculate_id_qc(df)
+    # filter away alignments with less than 90% identity
+    mm_out = mm_out[mm_out['id'] >= 90]
+    # filter away alignments with less than 15% query coverage
+    mm_out = mm_out[mm_out['qc'] >= 15]
+
     # read in metadata file
     metadata_df = pd.read_csv(metadata_file, sep='\t')
     # read in amr gene summary file
@@ -59,16 +64,20 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
         species_set = set(aro_df['qname_species'].unique())
         for species in sorted(species_set):
             # filter aro_df to only include this species
-            aro_df = aro_df[aro_df['qname_species'] == species]
+            aro_df_filt = aro_df[aro_df['qname_species'] == species]
             # find the max qstart, save the path_ID and qstart
-            max_qstart_row = aro_df.loc[aro_df['qstart'].idxmax()]
+            max_qstart_row = aro_df_filt.loc[aro_df_filt['qstart'].idxmax()]
             max_qstart = max_qstart_row['qstart']
             max_qstart_path = max_qstart_row['qname']
             max_qstart_species = max_qstart_row['qname_species']
             # in rows with same max_qstart_path, find the min qend
-            same_start_df = aro_df[aro_df['qname'] == max_qstart_path]
+            same_start_df = aro_df_filt[aro_df_filt['qname'] == max_qstart_path]
             min_qend_row = same_start_df.loc[same_start_df['qend'].idxmin()]
             min_qend = min_qend_row['qend']
+            if min_qend <= max_qstart:
+                # find second min qend that is greater than max_qstart, can't be equal to max_qstart because that would mean the path is being trimmed to 0 length
+                min_qend_row = same_start_df[same_start_df['qend'] > max_qstart].loc[same_start_df[same_start_df['qend'] > max_qstart]['qend'].idxmin()]
+                min_qend = min_qend_row['qend']
             # save aro, max_qstart_species, path_ID, max_qstart, min_qend to paths_to_trim dataframe
             paths_to_trim[aro] = (max_qstart_species, max_qstart_path, int(max_qstart), int(min_qend))
 
@@ -82,7 +91,8 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
         # if path_id ARO is in paths_to_trim, trim the sequence in fastas and write to new fasta file
         aro = row['ARO']
         path_id = row['path_id']
-        if aro in paths_to_trim and path_id == paths_to_trim[aro][1] and aro not in aros_trimmed:
+        species = row['tax_ID_names']
+        if aro in paths_to_trim and species == paths_to_trim[aro][0] and path_id == paths_to_trim[aro][1] and aro not in aros_trimmed:
             # find the sequence by path_id in fastas
             seq_record = None
             for record in SeqIO.parse(fastas, "fasta"):
@@ -103,9 +113,9 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
             row['final_status'] = "very_strict"
             updated_metadata.append(row)
             aros_trimmed.append(aro)
-        elif aro in paths_to_trim and path_id != paths_to_trim[aro][1]:
+        elif aro in paths_to_trim and species == paths_to_trim[aro][0] and path_id != paths_to_trim[aro][1]:
             continue
-        elif aro in aros_trimmed:
+        elif aro in aros_trimmed and species == paths_to_trim[aro][0]:
             continue
         else: # aro not in paths_to_trim
             #write out fasta file as is
@@ -126,11 +136,6 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
     amr_df['num_very_strict_paths'] = amr_df['ARO'].map(aro_path_count).fillna(0).astype(int)
 
     return updated_metadata, amr_df
-            
-
-
-
-
 
 if __name__ == "__main__":
     # specify the input file path

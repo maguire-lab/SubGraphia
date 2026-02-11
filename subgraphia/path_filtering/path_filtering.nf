@@ -286,7 +286,7 @@ process MINIMAP_TRIM_PATHS {
     # concatenate all filtered fasta files into single fasta file
     cat $filtered_fasta > all_filtered_paths.fasta
     #run minimap2
-    minimap2 -x asm5 -t 8 all_filtered_paths.fasta all_filtered_paths.fasta > tmp.tsv
+    minimap2 -P -x asm5 -t 8 all_filtered_paths.fasta all_filtered_paths.fasta > tmp.tsv
     cut -f1-11 tmp.tsv > ava_mm_out.tsv
     rm tmp.tsv
     # run trimming script on output
