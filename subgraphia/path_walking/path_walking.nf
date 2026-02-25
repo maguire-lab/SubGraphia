@@ -1,38 +1,4 @@
 // Nextflow script for processing input graphs, aligning them, extracting subgraphs, and walking paths.
-
-process DATABASE_CHECK {
-    conda "${projectDir}/path_walking/path_walking.yml"
-    // Check if files exist at the specified paths for kraken_db, genes, and bakta_db, else download the databases.
-    input:
-    val kraken_db
-    val genes
-    val bakta_db
-
-    output:
-    path 'DATABASE_CHECK.done', emit: db_check
-
-    script:
-    """
-    if [ ! -d "$kraken_db" ]; then
-        kraken2-build --standard --threads 24 --db $kraken_db
-    fi
-    if [ ! -f "$genes" ]; then
-        wget https://card.mcmaster.ca/latest/data
-        tar -xf data ./nucleotide_fasta_protein_homolog_model.fasta
-        mv nucleotide_fasta_protein_homolog_model.fasta $genes
-        rm data
-    fi
-    if [ ! -d "$bakta_db" ]; then
-        bakta_db download --output $bakta_db --type light
-    fi
-    touch DATABASE_CHECK.done
-    """
-    stub:
-    """
-    touch DATABASE_CHECK.done
-    """
-}
-
 process GRAPHALIGNER {
     conda "${projectDir}/path_walking/graphaligner.yml"
 
@@ -43,7 +9,6 @@ process GRAPHALIGNER {
     input:
     tuple val(graphID), path(graph)
     path genes
-    path db_check
 
     output:
     tuple val(graphID), path('*.tsv'), emit: align
@@ -70,7 +35,6 @@ process GFAKRAKEN2 {
     input:
     tuple val(graphID), path(graph)
     path kraken_db
-    path db_check
 
     output:
     tuple val(graphID), path('*kraken_out.txt'), emit: kraken_out

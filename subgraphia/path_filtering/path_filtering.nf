@@ -49,7 +49,7 @@ process BWAMEM2 {
 
     tag "${readID}"
 
-    publishDir "$params.outdir/", mode: 'copy', pattern : '*.bam'
+    // publishDir "$params.outdir/", mode: 'copy', pattern : '*.bam'
 
     input:
     //input only the fasta files from the channel
@@ -84,7 +84,7 @@ process BAM_FILTER {
 
     conda "${projectDir}/path_filtering/path_filtering.yml"
 
-    publishDir "$params.outdir/", mode: 'copy', pattern : 'bam_filtering_summary.csv'
+    // publishDir "$params.outdir/", mode: 'copy', pattern : 'bam_filtering_summary.csv'
 
     tag "${readID}"
 

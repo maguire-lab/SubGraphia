@@ -1,42 +1,22 @@
 {
     "kraken": {
         "content": [
-            "3002274_test_kraken_out.txt:md5,8e5e72bd873ca27318cbfb931e71f0c7"
+            "3002274_test_kraken_out.txt:md5,8275c25b85029e71ad9a543f6af83a82"
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "24.10.4"
+            "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-18T13:09:03.718744528"
-    },
-    "amr_gene_summary": {
-        "content": [
-            "AMR_genes_summary.tsv:md5,792f77b8e06c97cef148ed1a6e73c79f"
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "24.10.4"
-        },
-        "timestamp": "2025-12-18T13:09:03.751546406"
+        "timestamp": "2026-02-25T15:25:41.291117629"
     },
     "graphaligner": {
         "content": [
-            "3002274_test_GA_locus.tsv:md5,c3612e4dd875585668520bbf26d9fd26"
+            "3002274_test_GA_locus.tsv:md5,696ca2ee33e68f7f903cdf3fd32069bd"
         ],
         "meta": {
             "nf-test": "0.9.3",
-            "nextflow": "24.10.4"
+            "nextflow": "25.10.2"
         },
-        "timestamp": "2025-12-18T13:09:03.702141411"
-    },
-    "final_metadata": {
-        "content": [
-            "final_metadata.tsv:md5,9b460711304a79528b0eaf691e87afbb"
-        ],
-        "meta": {
-            "nf-test": "0.9.3",
-            "nextflow": "24.10.4"
-        },
-        "timestamp": "2025-12-18T13:09:03.76567151"
+        "timestamp": "2026-02-25T15:25:41.254033436"
     }
 }

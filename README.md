@@ -34,11 +34,15 @@ git clone https://github.com/maguire-lab/Subgraph_Analyser.git
 - Install [`conda`](https://docs.conda.io/projects/conda/en/stable/user-guide/getting-started.html) or [`mamba`](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html)
 
 ## Set database paths
-- Edit `nextflow.config` to set the paths to the required databases in the standard and test profiles:
+- Edit `SubGraphia/subgraphia/nextflow.config` to set the paths to the required databases in the standard and test profiles:
     - [kraken2 database](https://github.com/DerrickWood/kraken2/wiki/Manual#kraken-2-databases) path
     - [bakta database](https://github.com/oschwengers/bakta?tab=readme-ov-file#installation) path
-    - gene multi-fasta file path (can use genes of interest or default [CARD](https://card.mcmaster.ca/download) protein homolog AMR gene sequences)
-- If databases are not found at the specified paths they will be downloaded automatically on first use in these locations (expect large disk space requirements)
+    - gene multi-fasta file path (can use genes of interest e.g. [CARD](https://card.mcmaster.ca/download) protein homolog AMR gene sequences)
+        - Use CARD protein homolog sequences for the nf-test module. 
+    ```bash
+    wget https://card.mcmaster.ca/latest/data
+    tar -xvf data ./nucleotide_fasta_protein_homolog_model.fasta
+    ```
 - See comments in `nextflow.config` for more information
 
 ## Test the pipeline
@@ -57,29 +61,39 @@ nf-test test tests/main.nf.test
 ## Inputs 
 - A GFA format metagenomic assembly graph
     - See [agtools](https://github.com/Vini2/agtools/tree/main) or [Bandage](https://github.com/rrwick/Bandage) to convert from fastg to gfa if needed
+    - e.g. assembly_graph_after_simplification.gfa from SPAdes or assembly_graph.gfa from Flye
 - Reads used to create the assembly graph in fastq format
-- Alternate genes of interest multi-fasta file if not using default CARD protein homolog AMR gene sequences. 
 
 ## Run the pipeline
 ```bash
-nextflow run main.nf --graph <path/to/graph.gfa> --reads <path/to/reads_R{1,2}.fastq> 
+nextflow run main.nf --graph <path/to/graph.gfa> --reads <'path/to/reads_R*.fastq'> 
 ```
+- path must be in '' to use wildcards for paired end reads
 
 ## Outputs
 - Path sequences in fasta format passing through the gene/segment of interest
-- Summary of quantity of paths per gene at various quality thresholds
-- metadata table with taxa identification and coverage information for each path
-- .gbff annotation files for each path
+- Summary of quantity of paths per gene at various quality thresholds, default `very strict`
+- metadata table with taxa identification, path length, and gene of interest for each path
+- .gbff annotation files for each path if bakta annotation is run
+
+## MISC
+- The ete4 ncbi database is installed at first use and not updated. Can encounter an error caused by a new taxid used by kraken2 but not yet in your local ete4 database. Try updating the ete4 database if this occurs. 
+```
+from ete4 import NCBITaxa
+
+# Initialize the NCBITaxa object
+ncbi = NCBITaxa()
+
+# Update the database
+ncbi.update_taxonomy_database()
+```
 
 # Contributing
 Thank you for your interest in contributing to SubGraphia! We use GitHub for managing issues, contribution requests and everything else. So feel free to communicate with us using new issues and discussions, whatever best fits your idea for your contribution.
 ## to do list
 - [ ] update strictness outputs
-- [ ] change dbcheck to look for dbs in projectdir first, then error if not found
 - [ ] add versions output for software used
 - [ ] put scripts in a bin/ directory
-- [ ] Add container support (singularity/apptainer) 
+- [ ] Add container support (apptainer) 
 - [ ] Add AMR gene position to metadata
 - [ ] feature: if no paths pass strict filtering, add graphaligner segments as path? 
-- [ ] Update test assertions
-- [ ] --reads not finding both R1 and R2 when using glob pattern

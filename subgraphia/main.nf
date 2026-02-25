@@ -13,7 +13,7 @@ Channel
     .set { reads }
 
 // Import processes
-include {DATABASE_CHECK; GRAPHALIGNER; GFAKRAKEN2; SUBGRAPH_EXTRACT; PATH_WALK} from "${projectDir}/path_walking/path_walking.nf"
+include {GRAPHALIGNER; GFAKRAKEN2; SUBGRAPH_EXTRACT; PATH_WALK} from "${projectDir}/path_walking/path_walking.nf"
 include {MINIMAP_REDUNDANCY_REMOVER; BWAMEM2; BAM_FILTER; PATH_READ_ALN_FILTER; LR_MINIMAP2; LR_BAM_FILTER; LR_FINAL_RECONCILIATION; MINIMAP_TRIM_PATHS} from "${projectDir}/path_filtering/path_filtering.nf"
 include {BAKTA} from "${projectDir}/annotation/annotation.nf"
 
@@ -32,11 +32,13 @@ workflow {
     if (params.reads == "specify_path") {
         error "ERROR: reads must be specified in nextflow.config as a glob pattern e.g. '/path/to/reads/*_R{1,2}.fastq'"
     }
+    // print params.reads
+        println "Reads input: ${params.reads}"
+        
     // run the subgraph extraction process if a graph is supplied
     if (params.graph != "specify_path") {
-        DATABASE_CHECK(params.kraken_db, params.genes, params.bakta_db)
-        GRAPHALIGNER(graph, params.genes, DATABASE_CHECK.out.db_check)
-        GFAKRAKEN2(graph, params.kraken_db, DATABASE_CHECK.out.db_check)
+        GRAPHALIGNER(graph, params.genes)
+        GFAKRAKEN2(graph, params.kraken_db)
         SUBGRAPH_EXTRACT(graph.join(GRAPHALIGNER.out.align), params.radius)
         subgraph_output = SUBGRAPH_EXTRACT.out.subgraphs.join(GRAPHALIGNER.out.align).join(GFAKRAKEN2.out.kraken_out).transpose()
         PATH_WALK(subgraph_output)
@@ -46,14 +48,18 @@ workflow {
             BAM_FILTER(BWAMEM2.out.bam)
             PATH_READ_ALN_FILTER(BAM_FILTER.out.bam_summary, PATH_WALK.out.metadata.collect(), MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), params.strictness)
             MINIMAP_TRIM_PATHS(PATH_READ_ALN_FILTER.out.filtered_fasta.collect(), PATH_READ_ALN_FILTER.out.filtered_metadata, PATH_READ_ALN_FILTER.out.amr_summary)
-            BAKTA(MINIMAP_TRIM_PATHS.out.trimmed_fasta.transpose(), params.bakta_db)
+            if (params.bakta) {
+                 BAKTA(MINIMAP_TRIM_PATHS.out.trimmed_fasta.transpose(), params.bakta_db)
+            }
         }
         else if (files(params.reads).size() == 1) {
             LR_MINIMAP2(MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), reads)
             LR_BAM_FILTER(LR_MINIMAP2.out.bam)
             LR_FINAL_RECONCILIATION(LR_BAM_FILTER.out.bam_summary, PATH_WALK.out.metadata.collect(), MINIMAP_REDUNDANCY_REMOVER.out.representative_fasta.collect(), params.strictness)
             MINIMAP_TRIM_PATHS(LR_FINAL_RECONCILIATION.out.filtered_fasta.collect(), LR_FINAL_RECONCILIATION.out.filtered_metadata, LR_FINAL_RECONCILIATION.out.amr_summary)
-            BAKTA(MINIMAP_TRIM_PATHS.out.trimmed_fasta.transpose(), params.bakta_db)
+            if (params.bakta) {
+                BAKTA(MINIMAP_TRIM_PATHS.out.trimmed_fasta.transpose(), params.bakta_db)
+            }
         }
                 
     }

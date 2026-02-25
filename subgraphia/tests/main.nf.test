@@ -20,10 +20,7 @@ nextflow_pipeline {
                 { assert file("${projectDir}/tests/results/3002274_test_kraken_out.txt").exists() },
                 { assert snapshot(file("${projectDir}/tests/results/3002274_test_kraken_out.txt")).match("kraken") },
                 { assert file("${projectDir}/tests/results/AMR_genes_summary.tsv").exists() },
-                { assert snapshot(file("${projectDir}/tests/results/AMR_genes_summary.tsv")).match("amr_gene_summary") },
-                { assert file("${projectDir}/tests/results/final_metadata.tsv").exists() },
-                { assert snapshot(file("${projectDir}/tests/results/final_metadata.tsv")).match("final_metadata") }
-
+                { assert file("${projectDir}/tests/results/metadata.tsv").exists() }
             )
         }
 

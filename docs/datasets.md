@@ -208,6 +208,14 @@ Real examples or artifical LGTs between reference genomes used to create the dat
         - Donor: GCF_023100885.1
         - Recipient: GCA_050154015.1
 
+## Simulated wastewater complete references only
+- 26M short reads
+- exponential distribution
+- Simulation command: ```iss generate --genomes ../assemblies/complete_ww/*.fna --abundance exponential --model miseq --output miseq_reads --cpus 4 --n_reads 26M```
+    - iss version 1.6.0
+
+
+
 ## Simulated manure pit metagenome
 - High complexity, animal health associated sample.
 - Simulating higher depth than wastewater to represent a more targeted sequencing effort.
