@@ -1,33 +1,55 @@
 // Nextflow script for processing input graphs, aligning them, extracting subgraphs, and walking paths.
 process GRAPHALIGNER {
     conda "${projectDir}/path_walking/graphaligner.yml"
-
+    cpus params.max_cpus/3
     tag "${graphID}"
-
-    publishDir "$params.outdir/", mode: 'copy', pattern : '*GA_locus.tsv'
-
+    
     input:
     tuple val(graphID), path(graph)
     path genes
 
     output:
-    tuple val(graphID), path('*.tsv'), emit: align
+    tuple val(graphID), path('*.gaf'), emit: align
 
     script:
     """
-    GraphAligner -g $graph -f $genes -a ${graphID}_GA_.gaf -x dbg
-    python3 ${projectDir}/path_walking/graphaligner_hit_locus.py ${graphID}_GA_.gaf ${graphID}_GA_locus.tsv
+    GraphAligner -g $graph -f $genes -a ${graphID}_GA_.gaf -x dbg -t ${task.cpus}
     """
     stub:
     """
-    touch ${graphID}_GA_locus.tsv
+    touch ${graphID}_GA_.gaf
     """
 
 }
 
+process GRAPHALIGNER_OUTPUT_PROCESSING {
+    conda "${projectDir}/path_walking/path_walking.yml"
+    tag "${graphID}"
+    publishDir "$params.outdir/", mode: 'copy', pattern : '*GA_locus.tsv'
+
+    input:
+    tuple val(graphID), path(align)
+    tuple val(graphID), path(graph)
+
+    output:
+    tuple val(graphID), path('*.tsv'), emit: align_processed
+    tuple val(graphID), path('*_gene_sequences.fasta'), emit: gene_sequences
+
+    script:
+    """
+    python3 ${projectDir}/path_walking/graphaligner_hit_locus.py ${graphID}_GA_.gaf ${graphID}_GA_locus.tsv ${graph}
+    """
+    stub:
+    """
+    touch ${graphID}_GA_locus.tsv
+    touch ${graphID}_gene_sequences.fasta
+    """
+
+    }
+
 process GFAKRAKEN2 {
     conda "${projectDir}/path_walking/path_walking.yml"
-
+    cpus params.max_cpus
     tag "${graphID}"
 
     publishDir "$params.outdir/", mode: 'copy', pattern : '*kraken_out.txt'
@@ -41,7 +63,7 @@ process GFAKRAKEN2 {
 
     script:
     """
-    python3 ${projectDir}/path_walking/gfaKraken.py $graph $kraken_db
+    python3 ${projectDir}/path_walking/gfaKraken.py $graph $kraken_db ${task.cpus}
     """
 
     stub:
@@ -53,10 +75,7 @@ process GFAKRAKEN2 {
 
 process SUBGRAPH_EXTRACT {
     conda "${projectDir}/path_walking/path_walking.yml"
-
     tag "${graphID}"
-
-    // publishDir "$params.outdir/${graphID}/subgraphs/", mode: 'copy', pattern : '*.gfa'
 
     input:
     // input joined tuple of graph and graphaligner output
@@ -81,17 +100,10 @@ process SUBGRAPH_EXTRACT {
 
 process PATH_WALK {
     conda "${projectDir}/path_walking/path_walking.yml"
-
-    maxForks 8
-
-    // publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*congruent_paths.csv'
-    // publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'copy', pattern : '*metadata.tsv'
-    // publishDir "$params.outdir/${graphID}/${subgraphs.baseName}/", mode: 'symlink', pattern : '*.fasta'
-
+    maxForks params.max_cpus
     tag "${graphID}"
 
     input:
-    //input joined tuple of subgraph, graphaligner output, and kraken output
     tuple val(graphID), path(subgraphs), path(align), path(kraken_out)
 
     output:

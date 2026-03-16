@@ -22,6 +22,8 @@ def calculate_id_qc(df):
     return df
 
 def main(minimap_output_file, metadata_file, amr_gene_summary_file):
+    # create empty final multifasta list to hold the final sequences that can be written out after this function is called
+    final_multifasta = []
     # parse the minimap output
     df = parse_minimap_output(minimap_output_file)
     #filter self alignments
@@ -104,9 +106,9 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
             # trim the sequence
             species, trim_path_id, start, end = paths_to_trim[aro]
             trimmed_seq = seq_record.seq[start:end]
-            # write the trimmed sequence to a new fasta file
-            trimmed_record = SeqIO.SeqRecord(trimmed_seq, id=path_id+"_trimmed", description="") 
-            SeqIO.write(trimmed_record, f"{path_id}_trimmed.fasta", "fasta")
+            # Add the trimmed sequence to the final multifasta list as a SeqRecord object with id = path_id+"_trimmed" and description = ""
+            trimmed_seq_record = SeqIO.SeqRecord(trimmed_seq, id=path_id+"_trimmed", description="")
+            final_multifasta.append(trimmed_seq_record)
             # update the metadata row with new path_id and length, update final_status to "very_strict"
             row['path_id'] = path_id+"_trimmed"
             row['path_length'] = len(trimmed_seq)
@@ -118,7 +120,7 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
         elif aro in aros_trimmed and species == paths_to_trim[aro][0]:
             continue
         else: # aro not in paths_to_trim
-            #write out fasta file as is
+            # Add the original sequence to the final multifasta list as a SeqRecord object with id = path_id and description = ""
             seq_record = None
             for record in SeqIO.parse(fastas, "fasta"):
                 if record.id == path_id:
@@ -126,7 +128,7 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
                     break
             if seq_record is None:
                 break
-            SeqIO.write(seq_record, f"{path_id}.fasta", "fasta")
+            final_multifasta.append(seq_record)
             row['final_status'] = "very_strict"
             updated_metadata.append(row)
 
@@ -135,7 +137,110 @@ def main(minimap_output_file, metadata_file, amr_gene_summary_file):
     # Add a 'num_very_strict_paths' column to the amr_df
     amr_df['num_very_strict_paths'] = amr_df['ARO'].map(aro_path_count).fillna(0).astype(int)
 
-    return updated_metadata, amr_df
+    return final_multifasta, updated_metadata, amr_df
+
+def pathSeq_v_geneSeq(final_multifasta, updated_metadata, amr_df, gene_seqs):
+    """
+    Function to compare the trimmed path sequences to the reference gene sequences, the following rules apply:
+    1) AROs with 0 paths are assigned the gene sequence
+    2) AROs with >= 1 path shorter than the gene sequence are assigned the gene sequence, other paths removed
+    3) AROs with some shorter paths and some longer paths than the gene sequence have the shorter paths removed and the longer paths kept, gene sequence not added
+    4) AROs with all paths longer than the gene sequence, nothing changed. 
+
+    returns:
+    multifasta: modified as above
+    metadata: modified as above, new path_IDs, new path lengths, NAs for tax_ID_names, tax_ID_lineage, and LCA_Rank
+    AMR_summary: modified as above, updated path counts per ARO
+    """
+
+    # parse gene_seqs fasta file into a dictionary mapping ARO to sequence 
+    gene_seq_dict = {}
+    for record in SeqIO.parse(gene_seqs, "fasta"):
+        gene_seq_dict[record.id] = record.seq
+
+    # create a dictionary mapping ARO to a list of path sequence lengths from updated_metadata
+    aro_to_path_lengths = {}
+    for row in updated_metadata:
+        aro = row['ARO']
+        path_length = row['path_length']
+        # using AROs as keys, append all path lengths to a list for each ARO
+        if aro in aro_to_path_lengths:
+            aro_to_path_lengths[aro].append(path_length)
+        else:            
+            aro_to_path_lengths[aro] = [path_length]
+
+    # create empty lists to hold the final multifasta, updated metadata, and updated amr_df
+    multifasta = []
+    metadata = []
+    amr_summary = []
+
+    # loop through amr_df, determine number of paths per ARO, get lengths of paths from updated_metadata, get gene sequence lengths from gene_seqs, apply rules above
+    for index, row in amr_df.iterrows():
+        aro = row['ARO']
+        num_paths = row['num_very_strict_paths']
+        # if num_paths == 0
+        if num_paths == 0:
+            # add the gene sequence to the multifasta with id = aro+"_gene_seq" and description = ""
+            gene_seq_record = SeqIO.SeqRecord(gene_seq_dict[aro], id=aro+"_gene_seq", description="")
+            multifasta.append(gene_seq_record)
+            # add a row to metadata with path_id = aro+"_gene_seq", path_length = length of gene sequence, tax_ID_names = NA, tax_ID_lineage = NA, LCA_Rank = NA, ARO = aro, final_status = "very_strict"
+            metadata.append({'path_id': aro+"_gene_seq", 'path_length': len(gene_seq_dict[aro]), 'tax_ID_names': "NA", 'tax_id_lineage': "NA", 'LCA_rank': "NA", 'ARO': aro, 'final_status': "very_strict"})
+            # add a row to amr_summary with ARO = aro, num_very_strict_paths = 1
+            amr_summary.append({'ARO': aro, 'num_very_strict_paths': 1})
+        elif num_paths >= 1:
+            path_lengths = aro_to_path_lengths[aro]
+            gene_seq_length = len(gene_seq_dict[aro])
+            # if all paths are shorter than the gene sequence, add the gene sequence to the multifasta with id = aro+"_gene_seq" and description = "", do not add any of the existing paths to the updated files
+            if all(path_length < gene_seq_length for path_length in path_lengths):
+                gene_seq_record = SeqIO.SeqRecord(gene_seq_dict[aro], id=aro+"_gene_seq", description="")
+                multifasta.append(gene_seq_record)
+                metadata.append({'path_id': aro+"_gene_seq", 'path_length': len(gene_seq_dict[aro]), 'tax_ID_names': "NA", 'tax_id_lineage': "NA", 'LCA_rank': "NA", 'ARO': aro, 'final_status': "very_strict"})
+                amr_summary.append({'ARO': aro, 'num_very_strict_paths': 1})
+            # if some paths are shorter than the gene sequence and some paths are longer than the gene sequence, add the longer paths to the multifasta and updated metadata, do not add the gene sequence
+            elif any(path_length < gene_seq_length for path_length in path_lengths) and any(path_length >= gene_seq_length for path_length in path_lengths):
+                for row in updated_metadata:
+                    if row['ARO'] == aro and row['path_length'] >= gene_seq_length:
+                        # add the path sequence to the multifasta with id = path_id and description = ""
+                        seq_record = None
+                        for record in final_multifasta:
+                            if record.id == row['path_id']:
+                                seq_record = record
+                                break
+                        if seq_record is None:
+                            break
+                        multifasta.append(seq_record)
+                        # add a row to metadata with path_id = path_id, path_length = path_length, tax_ID_names = tax_ID_names, tax_ID_lineage = tax_ID_lineage, LCA_Rank = LCA_Rank, ARO = aro, final_status = final_status from updated_metadata
+                        metadata.append({'path_id': row['path_id'], 'path_length': row['path_length'], 'tax_ID_names': row['tax_ID_names'], 'tax_id_lineage': row['tax_id_lineage'], 'LCA_rank': row['LCA_rank'], 'ARO': aro, 'final_status': row['final_status']})
+                amr_summary.append({'ARO': aro, 'num_very_strict_paths': sum(1 for path_length in path_lengths if path_length >= gene_seq_length)})
+            # if all paths are longer than the gene sequence, add all paths to the multifasta and updated metadata, do not add the gene sequence
+            elif all(path_length >= gene_seq_length for path_length in path_lengths):
+                for row in updated_metadata:
+                    if row['ARO'] == aro:
+                        # add the path sequence to the multifasta with id = path_id and description = ""
+                        seq_record = None
+                        for record in final_multifasta:
+                            if record.id == row['path_id']:
+                                seq_record = record
+                                break
+                        if seq_record is None:
+                            break
+                        multifasta.append(seq_record)
+                        # add a row to metadata with path_id = path_id, path_length = path_length, tax_ID_names = tax_ID_names, tax_ID_lineage = tax_ID_lineage, LCA_Rank = LCA_Rank, ARO = aro, final_status = final_status from updated_metadata
+                        metadata.append({'path_id': row['path_id'], 'path_length': row['path_length'], 'tax_ID_names': row['tax_ID_names'], 'tax_id_lineage': row['tax_id_lineage'], 'LCA_rank': row['LCA_rank'], 'ARO': aro, 'final_status': row['final_status']})
+                amr_summary.append({'ARO': aro, 'num_very_strict_paths': num_paths})
+
+    # create a new amr_df from amr_summary
+    amr_summary_df = pd.DataFrame(amr_summary)
+
+    # merge amr_summary_df with original amr_df to get all the original columns back, using ARO as the key
+    # drop num_very_strict_paths column from original amr_df
+    to_join_amr_df = amr_df.drop(columns=['num_very_strict_paths'])
+    merged_amr_df = pd.merge(to_join_amr_df, amr_summary_df, on='ARO', how='left')
+
+    # create a new metadata_df from metadata
+    metadata_df = pd.DataFrame(metadata)
+
+    return multifasta, metadata_df, merged_amr_df
 
 if __name__ == "__main__":
     # specify the input file path
@@ -143,10 +248,13 @@ if __name__ == "__main__":
     minimap_output_file = sys.argv[2]
     metadata_file = sys.argv[3]
     amr_gene_summary_file = sys.argv[4]
-
-    updated_metadata, amr_df = main(minimap_output_file, metadata_file, amr_gene_summary_file)
+    gene_seqs = sys.argv[5]
+    final_multifasta, updated_metadata, amr_df = main(minimap_output_file, metadata_file, amr_gene_summary_file)
+    multifasta, metadata_df, merged_amr_df = pathSeq_v_geneSeq(final_multifasta, updated_metadata, amr_df, gene_seqs)
+    # write each sequence in the final multifasta list to a separate fasta file with the name of the sequence ID
+    for seq_record in multifasta:
+        SeqIO.write(seq_record, f"{seq_record.id}.fasta", "fasta")
     # write updated metadata to a new file
-    updated_metadata_df = pd.DataFrame(updated_metadata)
-    updated_metadata_df.to_csv("metadata.tsv", sep='\t', index=False)
-    # write updated amr gene summary to a new file
-    amr_df.to_csv("AMR_genes_summary.tsv", sep='\t', index=False)
+    metadata_df.to_csv("metadata.tsv", sep='\t', index=False)
+    # write updated amr summary to a new file
+    merged_amr_df.to_csv("AMR_genes_summary.tsv", sep='\t', index=False)

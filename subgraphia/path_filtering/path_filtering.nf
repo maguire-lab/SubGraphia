@@ -2,12 +2,9 @@
 
 process MINIMAP_REDUNDANCY_REMOVER {
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
-    maxForks 8
-
+    cpus params.max_cpus/2
+    maxForks params.max_cpus/4
     tag "${subgraphID}"
-
-    // publishDir "$params.outdir/paths/${subgraphID}/", mode: 'symlink', pattern : '*.fasta'
 
     input:
     tuple val(subgraphID), path(fasta)
@@ -24,7 +21,7 @@ process MINIMAP_REDUNDANCY_REMOVER {
         mv $fasta "\${basename}.fasta"
     else
         # run minimap2 to find redundant paths
-        minimap2 -x asm5 -t 8 $fasta $fasta > tmp.tsv
+        minimap2 -x asm5 -t ${task.cpus} $fasta $fasta > tmp.tsv
         cut -f1-11 tmp.tsv > ava_mm_out.tsv
         rm tmp.tsv
 
@@ -46,13 +43,10 @@ process MINIMAP_REDUNDANCY_REMOVER {
 
 process BWAMEM2 {
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
+    cpus params.max_cpus
     tag "${readID}"
 
-    // publishDir "$params.outdir/", mode: 'copy', pattern : '*.bam'
-
     input:
-    //input only the fasta files from the channel
     path(representative_fasta)
     tuple val(readID), path(reads)
 
@@ -68,10 +62,10 @@ process BWAMEM2 {
     bwa-mem2 index all_paths.fasta
 
     # align reads to all paths
-    bwa-mem2 mem -a -K 100000000 -t 12 all_paths.fasta ${reads[0]} ${reads[1]} > out.sam
+    bwa-mem2 mem -a -K 100000000 -t ${task.cpus} all_paths.fasta ${reads[0]} ${reads[1]} > out.sam
 
     # convert sam to bam, sort and index
-    samtools sort --threads 12 -o all_paths_readaln.bam out.sam
+    samtools sort --threads ${task.cpus} -o all_paths_readaln.bam out.sam
     rm out.sam
     """
     stub:
@@ -81,11 +75,7 @@ process BWAMEM2 {
 }
 
 process BAM_FILTER {
-
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
-    // publishDir "$params.outdir/", mode: 'copy', pattern : 'bam_filtering_summary.csv'
-
     tag "${readID}"
 
     input:
@@ -105,13 +95,7 @@ process BAM_FILTER {
 }
 
 process PATH_READ_ALN_FILTER {
-
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
-    // publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
-    // publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
-    // publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
-
     tag "${readID}"
 
     input:
@@ -154,13 +138,12 @@ process PATH_READ_ALN_FILTER {
 
 process LR_MINIMAP2 {
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
+    cpus params.max_cpus
     tag "${readID}"
     
     publishDir "$params.outdir/", mode: 'copy', pattern : '*.bam'
 
     input:
-    //input only the fasta files from the channel
     path(representative_fasta)
     tuple val(readID), path(reads)
 
@@ -176,25 +159,21 @@ process LR_MINIMAP2 {
     minimap2 -d all_paths.mmi all_paths.fasta
 
     # align reads to all paths
-    minimap2 -ax map-ont -t 12 all_paths.mmi ${reads[0]} > out.sam
+    minimap2 -ax map-ont -t ${task.cpus} all_paths.mmi ${reads[0]} > out.sam
 
     # convert sam to bam, sort and index
-    samtools sort --threads 12 -o all_paths_readaln.bam out.sam
+    samtools sort --threads ${task.cpus} -o all_paths_readaln.bam out.sam
     rm out.sam
     """
     stub:
     """
     touch all_paths_readaln.bam
     """
-    
 }
 
 process LR_BAM_FILTER {
-
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
     publishDir "$params.outdir/", mode: 'copy', pattern : 'bam_filtering_summary.csv'
-
     tag "${readID}"
 
     input:
@@ -211,17 +190,10 @@ process LR_BAM_FILTER {
     """
     touch ${readID}_summary.csv
     """
-
 }
 
 process LR_FINAL_RECONCILIATION {
-
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
-    // publishDir "$params.outdir/${readID}/", mode: 'symlink', pattern : '*.fa'
-    // publishDir "$params.outdir/", mode: 'copy', pattern : '*final_metadata.tsv'
-    // publishDir "$params.outdir/", mode: 'copy', pattern : 'AMR_genes_summary.tsv'
-
     tag "${readID}"
 
     input:
@@ -264,7 +236,7 @@ process LR_FINAL_RECONCILIATION {
 
 process MINIMAP_TRIM_PATHS {
     conda "${projectDir}/path_filtering/path_filtering.yml"
-
+    cpus params.max_cpus
     tag "${readID}"
 
     publishDir "$params.outdir/paths/", mode: 'symlink', pattern : '*.fasta'
@@ -275,6 +247,7 @@ process MINIMAP_TRIM_PATHS {
     tuple val(readID), path(filtered_fasta)
     tuple val(readID), path(filtered_metadata)
     tuple val(readID), path(amr_summary)
+    tuple val(graphID), path(gene_sequences)
 
     output:
     tuple val(readID), path('*.fasta'), emit: trimmed_fasta
@@ -286,11 +259,11 @@ process MINIMAP_TRIM_PATHS {
     # concatenate all filtered fasta files into single fasta file
     cat $filtered_fasta > all_filtered_paths.fasta
     #run minimap2
-    minimap2 -P -x asm5 -t 8 all_filtered_paths.fasta all_filtered_paths.fasta > tmp.tsv
+    minimap2 -P -x asm5 -t ${task.cpus} all_filtered_paths.fasta all_filtered_paths.fasta > tmp.tsv
     cut -f1-11 tmp.tsv > ava_mm_out.tsv
     rm tmp.tsv
     # run trimming script on output
-    python3 ${projectDir}/path_filtering/trim_paths.py all_filtered_paths.fasta ava_mm_out.tsv $filtered_metadata $amr_summary
+    python3 ${projectDir}/path_filtering/trim_paths.py all_filtered_paths.fasta ava_mm_out.tsv $filtered_metadata $amr_summary $gene_sequences
     """
     stub:
     """
@@ -299,4 +272,4 @@ process MINIMAP_TRIM_PATHS {
     touch metadata.tsv
     touch AMR_genes_summary.tsv
     """
-    }
+}

@@ -96,4 +96,10 @@ Thank you for your interest in contributing to SubGraphia! We use GitHub for man
 - [ ] put scripts in a bin/ directory
 - [ ] Add container support (apptainer) 
 - [ ] Add AMR gene position to metadata
-- [ ] feature: if no paths pass strict filtering, add graphaligner segments as path? 
+- [ ] Add nextflow threads parameter to all processes that support multi-threading
+    [x] graphaligner
+    [x] kraken2
+    - minimap2
+    [x] bwa-mem2 mem
+    - samtools view
+    - bakta

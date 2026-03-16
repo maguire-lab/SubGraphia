@@ -213,6 +213,9 @@ Real examples or artifical LGTs between reference genomes used to create the dat
 - exponential distribution
 - Simulation command: ```iss generate --genomes ../assemblies/complete_ww/*.fna --abundance exponential --model miseq --output miseq_reads --cpus 4 --n_reads 26M```
     - iss version 1.6.0
+- fastp v1.1.0 command ```fastp -i miseq_reads_R1.fastq -I miseq_reads_R2.fastq -o ww_complete_fastpOut_reads_R1.fastq -O ww_complete_fastpOut_reads_R2.fastq```
+- metaspades v3.15.5 command ```spades.py -1 ww_complete_fastpOut_reads_R1.fastq -2 ww_complete_fastpOut_reads_R2.fastq --meta -m 300 -o ww_complete_metaspades_out```
+
 
 
 

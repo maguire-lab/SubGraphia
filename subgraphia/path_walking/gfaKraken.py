@@ -22,7 +22,7 @@ def run_kraken(gfa_input, kraken_db):
     #run kraken on the fasta file
     kraken_out=subprocess.check_output(["kraken2", 
                     "--db", kraken_db, 
-                    "--threads", "1",
+                    "--threads", threads,
                     fasta_file])
     # process kraken output using decode
     kraken_out = kraken_out.decode("utf-8")
@@ -32,6 +32,7 @@ def run_kraken(gfa_input, kraken_db):
 if __name__ == '__main__':
     gfa_input = sys.argv[1]
     kraken_db = sys.argv[2]
+    threads = sys.argv[3]
     kraken_out = run_kraken(gfa_input, kraken_db)
     #write kraken output to file
     with open(gfa_input.split(".")[0] + "_kraken_out.txt", "w") as f:

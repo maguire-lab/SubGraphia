@@ -686,7 +686,7 @@ def taxid_path_filter(kraken_out, full_paths, target_nodes, alignment_file):
     # create a tuple from the target nodes list with the direction and node ID
     target_nodes = [(target_nodes[i], target_nodes[i+1]) for i in range(0, len(target_nodes), 2)]
 
-    #define congruent paths
+    #define congruent paths as a tuple of the path and its lineage
     congruent_paths = []
 
     # Loop though each path in full_paths
@@ -749,16 +749,18 @@ def taxid_path_filter(kraken_out, full_paths, target_nodes, alignment_file):
                     break
         # If the loop did not break, the path is congruent, add it to the congruent paths list
         else:
-            congruent_paths.append(path)
+            congruent_paths.append((path, path_lineage))
 
     #if no congruent paths are found, add target nodes to congruent paths with a message that no paths were found
     if len(congruent_paths) == 0:
         # create a node list of target nodes
         target_node_list = [node[1] for node in target_nodes]
-        congruent_paths.append(target_node_list)
+        # find longest target node lineage
+        longest_target_lineage = max([ncbi.get_lineage(node_taxid_dict[node]) for node in target_node_list], key=len)
+        congruent_paths.append((target_node_list, longest_target_lineage))
         print("No congruent paths found, target node(s) added to congruent paths")
 
-    print("Number of taxonomically congruent paths found: " + str(len(congruent_paths)))        
+    print("Number of taxonomically congruent paths found: " + str(len(congruent_paths)))
     return congruent_paths    
 
 def gather_metadata(directed_graph, kraken_out, congruent_paths):
@@ -800,9 +802,9 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
     metadata = []
 
     # loop through each path in congruent_paths
-    for path in congruent_paths:
+    for path, path_lineage in congruent_paths:
         # assign a path ID which is: gfa_file.split(".")[0] + "_path_" + str(paths.index(path) + 1)
-        path_id = gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index(path) + 1)
+        path_id = gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index((path, path_lineage)) + 1)
         # get the path length
         path_length = sum([node_length_dict[node] for node in path]) - (55 * (len(path)))
         # # get the median coverage of the path
@@ -817,19 +819,16 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
         #     median_coverage = statistics.median(path_coverage)
         #     stdev_coverage = statistics.stdev(path_coverage)
         
-        # get the longest taxID lineage for the path
-        path_lineage = []
-        for segment in path:
-            # get lineage of the segment using the node_taxid_dict
-            node_lineage = ncbi.get_lineage(node_taxid_dict[segment])
-            # if node_lineage is NoneType, continue
-            if node_lineage is None:
-                continue
-            # if node_lineage is longer than the current path lineage, set the path lineage to the node lineage
-            if len(node_lineage) > len(path_lineage):
-                path_lineage = node_lineage
-            else: # path lineage is longer or equal to node lineage, continue
-                continue
+        # add the lineage of the path to the metadata list, convert lineage taxids to strings
+        # if path lineage is empty, path_lineage to "NA", path_lineage_names to "NA", and LCA_rank to "NA"
+        if len(path_lineage) == 0:
+            path_lineage = "NA"
+            path_lineage_names = "NA"
+            LCA_rank = "NA"
+            metadata.append([path_id, path_length, path_lineage, path_lineage_names, LCA_rank, 
+                            # median_coverage, stdev_coverage
+                            ])
+            continue
         #cut path_lineage off at the species rank if the lineages goes beyond
         ranks = ncbi.get_rank(path_lineage)
         if "species" in ranks.values():
@@ -856,7 +855,6 @@ def gather_metadata(directed_graph, kraken_out, congruent_paths):
         LCA_rank = []
         path_lineage_int = [int(taxid) for taxid in path_lineage.split(",")]
         ranks = ncbi.get_rank(path_lineage_int)
-        print(ranks)
         for taxid in path_lineage_int:
             LCA_rank.append(ranks[taxid])
         LCA_rank = LCA_rank[-1]
@@ -880,12 +878,12 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
     fasta_content = ""
 
     # output a fasta file for each path 
-    for path in congruent_paths:
+    for path, path_lineage in congruent_paths:
         # if path contains only one node, add the sequence of that node to fasta content
         if len(path) == 1:
             node = path[0]
             node_data = directed_graph.nodes[node]
-            fasta_header = ">" + gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index(path) + 1)
+            fasta_header = ">" + gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index((path, path_lineage)) + 1)
             fasta_content += fasta_header + "\n" + node_data['sequence'] + "\n"
             continue
 
@@ -999,7 +997,7 @@ def path_to_fasta(directed_graph, congruent_paths, overlap):
                         path_sequence = trimmed_sequence + path_sequence
 
         #create a fasta header based on input gfa basename and a path index
-        fasta_header = ">" + gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index(path) + 1)
+        fasta_header = ">" + gfa_input.split(".")[0] + "_path_" + str(congruent_paths.index((path, path_lineage)) + 1)
         #write the fasta header and sequence to the fasta content
         fasta_content += fasta_header + "\n" + path_sequence + "\n"
     
