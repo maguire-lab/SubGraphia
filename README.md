@@ -31,7 +31,7 @@ git clone https://github.com/maguire-lab/Subgraph_Analyser.git
 
 ## Install Conda/Mamba and Nextflow
 - Install [`nextflow`](https://nf-co.re/usage/installation)
-- install [`nf-test`](https://www.nf-test.com/)
+- Install [`nf-test`](https://www.nf-test.com/)
 - Install [`conda`](https://docs.conda.io/projects/conda/en/stable/user-guide/getting-started.html) or [`mamba`](https://mamba.readthedocs.io/en/latest/installation/mamba-installation.html)
 
 ## Set database paths
