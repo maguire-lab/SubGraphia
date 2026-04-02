@@ -257,13 +257,13 @@ process MINIMAP_TRIM_PATHS {
     script:
     """
     # concatenate all filtered fasta files into single fasta file
-    cat $filtered_fasta > all_filtered_paths.fasta
+    cat $filtered_fasta > all_filtered_paths.fa
     #run minimap2
-    minimap2 -P -x asm5 -t ${task.cpus} all_filtered_paths.fasta all_filtered_paths.fasta > tmp.tsv
+    minimap2 -P -x asm5 -t ${task.cpus} all_filtered_paths.fa all_filtered_paths.fa > tmp.tsv
     cut -f1-11 tmp.tsv > ava_mm_out.tsv
     rm tmp.tsv
     # run trimming script on output
-    python3 ${projectDir}/path_filtering/trim_paths.py all_filtered_paths.fasta ava_mm_out.tsv $filtered_metadata $amr_summary $gene_sequences
+    python3 ${projectDir}/path_filtering/trim_paths.py all_filtered_paths.fa ava_mm_out.tsv $filtered_metadata $amr_summary $gene_sequences
     """
     stub:
     """
