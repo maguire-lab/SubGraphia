@@ -31,10 +31,16 @@ def process_graphaligner_output(graphaligner_output):
     # calculate percent query coverage
     graphaligner_df["perc_query_cov"] = (graphaligner_df["query_end"] - graphaligner_df["query_start"])/graphaligner_df["query_length"]
 
-    # separate out query column "gb|AF028812.1|+|392-887|ARO:3002867|dfrF [Enterococcus faecalis]"
-    graphaligner_df[["db","accn","strand","coords","ARO","gene"]] = graphaligner_df["query"].str.split("|", expand=True)
-    # extract ARO number only
-    graphaligner_df["ARO"] = graphaligner_df["ARO"].str.split(":").str[1]
+    # if db is CARD, then parse out the ARO number from the query column
+    if "ARO:" in graphaligner_df["query"].iloc[0]:
+        # separate out query column "gb|AF028812.1|+|392-887|ARO:3002867|dfrF [Enterococcus faecalis]"
+        graphaligner_df[["db","accn","strand","coords","ARO","gene"]] = graphaligner_df["query"].str.split("|", expand=True)
+        # extract ARO number only
+        graphaligner_df["ARO"] = graphaligner_df["ARO"].str.split(":").str[1]
+
+    # else, set ARO column to query column, removing any special characters from the query column and whitespace
+    else:
+        graphaligner_df["ARO"] = graphaligner_df["query"].str.replace(r'[^a-zA-Z0-9]', '', regex=True).str.strip()
 
     # filter away any hits less than 50% query coverage or 50% identity
     graphaligner_df = graphaligner_df[graphaligner_df["perc_query_cov"] >= 0.5]
