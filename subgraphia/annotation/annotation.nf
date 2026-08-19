@@ -14,7 +14,7 @@ process BAKTA {
 
     script:
     """
-    bakta --db $bakta_db --skip-plot $filtered_fasta
+    bakta --db $bakta_db --skip-plot --skip-crispr $filtered_fasta
     """
     stub:
     """
